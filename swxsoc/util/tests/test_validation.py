@@ -10,7 +10,7 @@ from astropy.time import Time
 from astropy.timeseries import TimeSeries
 
 import astropy.units as u
-
+from numpy.random import random
 # Skip all tests in this module if spacepy is not available
 spacepy = pytest.importorskip("spacepy.pycdf")
 
