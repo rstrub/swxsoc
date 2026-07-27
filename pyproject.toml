@@ -122,7 +122,7 @@ testpaths = [
 ]
 doctest_plus = "enabled"
 text_file_format = "rst"
-addopts = "--doctest-rst"
+addopts = "--doctest-rst --ignore=docs/_build"
 
 [tool.coverage.run]
 omit = [

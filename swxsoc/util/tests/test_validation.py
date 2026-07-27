@@ -8,8 +8,9 @@ import numpy as np
 import pytest
 from astropy.time import Time
 from astropy.timeseries import TimeSeries
-from numpy.random import random
 
+import astropy.units as u
+from numpy.random import random
 # Skip all tests in this module if spacepy is not available
 pytest.importorskip("spacepy.pycdf")
 
