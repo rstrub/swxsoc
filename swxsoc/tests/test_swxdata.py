@@ -17,15 +17,15 @@ from astropy.wcs import WCS
 from ndcube import NDCube, NDCollection
 
 # Skip all tests in this module if spacepy is not available
-spacepy = pytest.importorskip("spacepy.pycdf")
-from matplotlib.axes import Axes
+
+
 from numpy.random import random
-from spacepy.pycdf import CDFError
 
 from swxsoc.swxdata import SWXData
 from swxsoc.util.schema import SWXSchema
 from swxsoc.util.validation import validate
-
+spacepy = pytest.importorskip("spacepy.pycdf")
+from spacepy.pycdf import CDFError  # noqa: E402
 
 def get_bad_timeseries():
     """
@@ -690,7 +690,7 @@ def test_sw_data_plot():
     images as expected.
     """
     # Skip this test if matplotlib is not available
-    matplotlib = pytest.importorskip("matplotlib")
+    pytest.importorskip("matplotlib")
     from matplotlib.axes import Axes
     
     # fmt: off
