@@ -13,18 +13,13 @@ from astropy.time import Time
 from astropy.timeseries import TimeSeries
 from astropy.units import Quantity
 from astropy.wcs import WCS
-
 from ndcube import NDCube, NDCollection
-
-# Skip all tests in this module if spacepy is not available
-pytest.importorskip("spacepy.pycdf")
 from numpy.random import random
-from spacepy.pycdf import CDFError
-
 from swxsoc.swxdata import SWXData
 from swxsoc.util.schema import SWXSchema
 from swxsoc.util.validation import validate
-
+spacepy = pytest.importorskip("spacepy.pycdf")
+from spacepy.pycdf import CDFError  # noqa: E402
 
 def get_bad_timeseries():
     """

@@ -10,13 +10,11 @@ from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
 from typing import Optional
-
 import numpy as np
 import yaml
-from astropy import units as u
 from astropy.table import Table
 from astropy.time import Time
-
+from astropy import units as u
 
 # Conditional import for CDF support
 try:
