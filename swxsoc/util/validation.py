@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Union
 
-
 import numpy as np
 
 from swxsoc.util.schema import SWXSchema

@@ -16,10 +16,12 @@ from astropy.utils.masked import Masked
 from astropy.wcs import WCS
 from ndcube import NDCollection, NDCube
 from numpy.random import random
+
 from swxsoc.io import fillval as fv
 from swxsoc.swxdata import SWXData
 from swxsoc.util import const
 from swxsoc.util.exceptions import SWXUserWarning
+
 spacepy = pytest.importorskip("spacepy.pycdf")
 from spacepy.pycdf import CDF, CDFError  # noqa: E402
 
