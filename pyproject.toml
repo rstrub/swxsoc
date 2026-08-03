@@ -25,6 +25,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
 ]
+
 # base dependencies required for core functionality, excluding optional file format support and development dependencies
 dependencies = [
   'astropy>=5.3.3',
@@ -58,29 +59,11 @@ fits = [
 
 # All file format support (currently just adds CDF since FITS is in base)
 all = [
-  'spacepy>=0.5.0',
-  'sammi-cdf>=0.1.2',
-  'matplotlib>=3.5.0',
+  "swxsoc[cdf,fits]",
 ]
 
 dev = [
-  # all
-  'spacepy>=0.5.0',
-  'sammi-cdf>=0.1.2',
-  'matplotlib>=3.5.0',
-  # docs
-  'sphinx==7.2.6',
-  'sphinx-automodapi==0.16.0',
-  'sphinx-copybutton==0.5.2',
-  # test
-  'pytest==9.0.3',
-  'pytest-astropy==0.11.0',
-  'pytest-cov==4.1.0',
-  'coverage[toml]==7.4.1',
-  'moto[all]==5.0.15',
-  # style
-  'ruff',
-  'rstcheck==6.2.0',
+  "swxsoc[docs, test, style]",
 ]
 
 docs = [
