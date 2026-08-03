@@ -33,6 +33,8 @@ jobs:
 
     # Run tests on Windows, Linux, and MacOS
     - name: Run Tests
+      env:
+          MPLBACKEND: 'Agg'  # Use non-interactive backend for matplotlib
       run: pytest swxsoc docs --cov swxsoc
     
     # Upload coverage reports to Codecov
