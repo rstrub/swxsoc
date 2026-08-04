@@ -609,35 +609,39 @@ This section describes how ``swxsoc`` handles this translation automatically.
 
 In Python, you might organize data hierarchically::
 
-    timeseries["REACH-165"]["Lat"]
-    timeseries["REACH-165"]["Lon"]
-    timeseries["REACH-134"]["Lat"]
-    timeseries["REACH-134"]["Lon"]
+  timeseries["REACH_165"]["Lat"]
+  timeseries["REACH_165"]["Lon"]
+  timeseries["REACH_134"]["Lat"]
+  timeseries["REACH_134"]["Lon"]
 
 However, CDF files require a flat namespace where all variables are at the same level.
 Without proper handling, variables from different epochs with identical names (``Lat``, ``Lon``) would overwrite each other, resulting in data loss.
 
 --------------------------------------
-6.2 Solution: Automatic Prefixing
+6.2 Solution: Selective Prefixing
 --------------------------------------
 
-To prevent naming conflicts, ``swxsoc`` automatically prefixes all variable names with their sanitized epoch key when writing multi-epoch data to CDF files.
+To prevent naming conflicts, ``swxsoc`` uses selective prefixing when writing multi-epoch data to CDF files.
+Only colliding variable names are deconflicted with an epoch-key prefix, and the first occurrence is kept unprefixed.
+For multi-timeseries data, dictionary keys must already be CDF-compatible (for example ``REACH_165``), rather than relying on automatic hyphen conversion.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 6.2.1 Write Operation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-During CDF file creation, variable names are automatically prefixed::
+During CDF file creation, conflicting names are handled asymmetrically::
 
-    timeseries["REACH-165"]["Lat"]       → CDF variable "REACH_165_Lat"
-    timeseries["REACH-165"]["time"]      → CDF variable "REACH_165_Epoch"
-    timeseries["REACH-134"]["Lat"]       → CDF variable "REACH_134_Lat"
-    timeseries["REACH-134"]["time"]      → CDF variable "REACH_134_Epoch"
+  timeseries["REACH_165"]["Lat"]       → CDF variable "Lat" (first conflicting occurrence)
+  timeseries["REACH_134"]["Lat"]       → CDF variable "REACH_134_Lat" (later conflicting occurrence)
+  timeseries["REACH_165"]["Sensor_A"]  → CDF variable "Sensor_A" (unique, no prefix)
+  timeseries["REACH_134"]["Sensor_B"]  → CDF variable "Sensor_B" (unique, no prefix)
+  timeseries["REACH_165"]["time"]      → CDF variable "Epoch" (default timeseries)
+  timeseries["REACH_134"]["time"]      → CDF variable "REACH_134_Epoch" (non-default timeseries)
 
 **Special Cases:**
 
 * The default epoch (typically ``"Epoch"``) remains unprefixed for backward compatibility with existing CDF files and ISTP conventions.
-* Hyphens in epoch keys are replaced with underscores to comply with CDF naming requirements.
+* Multi-timeseries dict keys should be underscore-safe and CDF-compatible before writing (for example ``REACH_134`` instead of ``REACH-134``).
 * The time column (``"time"``) in each :py:class:`~astropy.timeseries.TimeSeries` is renamed to ``"<prefix>_Epoch"`` or just ``"Epoch"`` for the default case.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -646,8 +650,10 @@ During CDF file creation, variable names are automatically prefixed::
 
 When loading a CDF file, ``swxsoc`` automatically detects prefixed variables and reconstructs the original hierarchical structure::
 
-    CDF variable "REACH_165_Lat"    → timeseries["REACH-165"]["Lat"]
-    CDF variable "REACH_165_Epoch"  → timeseries["REACH-165"]["time"]
+  CDF variable "Lat"              → timeseries["REACH_165"]["Lat"]
+  CDF variable "REACH_134_Lat"    → timeseries["REACH_134"]["Lat"]
+  CDF variable "Epoch"            → timeseries["REACH_165"]["time"]
+  CDF variable "REACH_134_Epoch"  → timeseries["REACH_134"]["time"]
 
 This ensures round-trip consistency: data saved to CDF and then loaded back maintains its original structure.
 
@@ -669,12 +675,14 @@ When writing multi-epoch data, ``swxsoc`` automatically:
 For data with two satellites::
 
     Variables:
-    - REACH_165_Epoch [5 records]
-    - REACH_165_Lat [5 records, DEPEND_0="REACH_165_Epoch"]
-    - REACH_165_Lon [5 records, DEPEND_0="REACH_165_Epoch"]
+    - Epoch [5 records] (default timeseries: REACH_165)
+    - Lat [5 records, DEPEND_0="Epoch"]
+    - Lon [5 records, DEPEND_0="Epoch"]
+    - Sensor_A [5 records, DEPEND_0="Epoch"]
     - REACH_134_Epoch [5 records]
     - REACH_134_Lat [5 records, DEPEND_0="REACH_134_Epoch"]
     - REACH_134_Lon [5 records, DEPEND_0="REACH_134_Epoch"]
+    - Sensor_B [5 records, DEPEND_0="REACH_134_Epoch"]
 
 This structure clearly indicates which time axis each measurement depends on, enabling proper interpretation by analysis tools and adherence to ISTP guidelines.
 
@@ -684,13 +692,13 @@ For more information about ISTP requirements, see the `ISTP Guidelines <http://s
 6.4 Design Rationale
 --------------------------------------
 
-The automatic prefixing approach was chosen for several reasons:
+The selective prefixing approach was chosen for several reasons:
 
 **Simplicity:**
-    No need to detect duplicate names or implement conditional logic; all non-default epoch variables are consistently prefixed.
+    Deconfliction is automatic, so users can work with natural per-timeseries names without manual renaming.
 
 **Predictability:**
-    Users can reliably predict CDF variable names from their Python structure.
+    Naming is deterministic: unique variables stay unchanged, and only later conflicting occurrences are prefixed.
 
 **Robustness:**
     Eliminates an entire class of bugs related to variable name collisions.
@@ -706,7 +714,7 @@ Consider a constellation mission with 32 satellites, each collecting the same me
 
 Without auto-prefixing, all 32 satellites' data would collapse into a single set of variables, losing 31 satellites' worth of data.
 
-With auto-prefixing, each satellite's data is preserved::
+With selective prefixing, each satellite's data is preserved::
 
     from astropy.time import Time, TimeDelta
     from astropy.timeseries import TimeSeries
@@ -716,7 +724,7 @@ With auto-prefixing, each satellite's data is preserved::
 
     # Create TimeSeries for multiple satellites
     timeseries_dict = {}
-    for sat_id in range(165, 197):  # REACH-165 through REACH-196
+    for sat_id in range(165, 197):  # REACH_165 through REACH_196
         times = Time('2024-01-01T00:00:00', scale='utc') + TimeDelta(np.arange(5) * u.s)
         ts = TimeSeries(
             time=times,
@@ -726,12 +734,12 @@ With auto-prefixing, each satellite's data is preserved::
                 'Sensor_A': u.Quantity(np.random.random(5), 'nT', dtype=np.float32),
             }
         )
-        timeseries_dict[f'REACH-{sat_id}'] = ts
+        timeseries_dict[f'REACH_{sat_id}'] = ts
 
     # Create SWXData and save
-    meta = SWXData.global_attribute_template("reach", "l1", "1.0.0")
+    meta = SWXData.global_attribute_template("eea", "l1", "1.0.0")
     swx_data = SWXData(timeseries=timeseries_dict, meta=meta)
-    cdf_path = swx_data.save()  # Auto-prefixes all variables
+    cdf_path = swx_data.save()  # Prefixes only variables that would collide
 
     # Load back - structure is preserved
     loaded_data = SWXData.load(cdf_path)
