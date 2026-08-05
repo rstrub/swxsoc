@@ -136,11 +136,11 @@ This allows  you to have multiple time series in one :py:class:`~swxsoc.swxdata.
 
 .. note::
 
-   When multiple :py:class:`~astropy.timeseries.TimeSeries` objects have the same column names (e.g., multiple satellites each collecting ``Lat``, ``Lon``, ``Sensor_A``), ``swxsoc`` automatically prevents naming conflicts during CDF file creation.
+    When multiple :py:class:`~astropy.timeseries.TimeSeries` objects have the same column names (e.g., multiple satellites each collecting ``Lat``, ``Lon``, ``Sensor_A``), ``swxsoc`` automatically prevents naming conflicts during CDF file creation.
     Prefixing is applied only when a naming collision occurs in the flat CDF namespace.
     The first occurrence keeps its original variable name (for example, ``Lat``), and later conflicting variables are prefixed with their sanitized epoch key (for example, ``REACH_134_Lat``).
-   When loading the CDF file, the original structure is automatically reconstructed.
-   For more details, see :ref:`cdf_format_guide` Section 6 on Multi-Epoch CDF Files.
+    When loading the CDF file, the original structure is automatically reconstructed.
+    For more details, see :ref:`cdf_format_guide` Section 6 on Multi-Epoch CDF Files.
 
 Creating a ``NDCollection`` for ``SWXData`` `spectra`
 --------------------------------------------------------------
@@ -572,8 +572,8 @@ Missing data, ``NaN``, masks, and FILLVAL on write/read are described in :doc:`f
 
     **Multi-Epoch Data:** When saving a :py:class:`~swxsoc.swxdata.SWXData` object containing multiple :py:class:`~astropy.timeseries.TimeSeries` (multi-epoch data), ``swxsoc`` selectively prefixes names only when needed to prevent collisions in the CDF file's flat namespace.
     For example, if ``Lat`` appears in multiple timeseries, the first occurrence remains ``Lat`` and later occurrences are written as prefixed names such as ``REACH_134_Lat``.
-   This prefixing is transparent on read operations—the original structure is automatically restored when loading the file.
-   See :ref:`cdf_format_guide` Section 6 for complete details on multi-epoch CDF files and variable naming conventions.
+    This prefixing is transparent on read operations—the original structure is automatically restored when loading the file.
+    See :ref:`cdf_format_guide` Section 6 for complete details on multi-epoch CDF files and variable naming conventions.
 
 Validating a CDF File
 =====================
