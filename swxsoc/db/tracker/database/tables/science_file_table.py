@@ -21,7 +21,7 @@ from typing import Any
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from metatracker import CONFIGURATION
+from swxsoc.db.tracker import CONFIGURATION
 
 from . import base_table as Base
 

@@ -1,15 +1,16 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-from swxsoc.util import util  # type: ignore
+from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
 
-from metatracker import _test_files_directory, log
-from metatracker.database import create_engine, create_session
-from metatracker.database.tables import create_tables
-from metatracker.database.tables.science_file_table import ScienceFileTable
-from metatracker.database.tables.science_product_table import ScienceProductTable
-from metatracker.database.tables.status_table import StatusTable
-from metatracker.tracker import tracker
+from swxsoc.util import util  # type: ignore
+from swxsoc.db.tracker import _test_files_directory, log
+from swxsoc.db.tracker.database import create_engine, create_session
+from swxsoc.db.tracker.database.tables import create_tables
+from swxsoc.db.tracker.database.tables.science_file_table import ScienceFileTable
+from swxsoc.db.tracker.database.tables.science_product_table import ScienceProductTable
+from swxsoc.db.tracker.database.tables.status_table import StatusTable
+from swxsoc.db.tracker import tracker
 
 TEST_DB_HOST = "sqlite://"
 TEST_RANDOM_FILENAME = _test_files_directory / "ducks.txt"

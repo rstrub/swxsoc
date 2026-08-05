@@ -4,11 +4,34 @@ Shared pytest fixtures for all swxsoc tests.
 These fixtures are automatically available to all test modules in the package.
 """
 
+import importlib.util
 import os
+from pathlib import Path
 
 import pytest
 
 import swxsoc
+
+TRACKER_TESTS_DIR = Path(__file__).parent / "db" / "tracker" / "tests"
+
+
+def _has_tracker_dependencies() -> bool:
+    return not (
+        importlib.util.find_spec("sqlalchemy") is None
+        or importlib.util.find_spec("tenacity") is None
+    )
+
+
+def pytest_ignore_collect(collection_path, config):
+    if _has_tracker_dependencies():
+        return False
+
+    try:
+        path = Path(collection_path)
+    except TypeError:
+        path = Path(str(collection_path))
+
+    return TRACKER_TESTS_DIR in (path, *path.parents)
 
 
 @pytest.fixture(autouse=True, scope="function")

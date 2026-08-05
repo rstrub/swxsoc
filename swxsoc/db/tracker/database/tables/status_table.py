@@ -17,7 +17,7 @@ from typing import Any, Optional
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
-from metatracker import CONFIGURATION
+from swxsoc.db.tracker import CONFIGURATION
 
 from . import base_table as Base
 

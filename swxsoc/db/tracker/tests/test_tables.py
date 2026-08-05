@@ -1,9 +1,11 @@
+from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
+
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import declarative_base
 
-from metatracker import CONFIGURATION
-from metatracker.database import create_engine, create_session
-from metatracker.database.tables import (
+from swxsoc.db.tracker import CONFIGURATION
+from swxsoc.db.tracker.database import create_engine, create_session
+from swxsoc.db.tracker.database.tables import (
     create_table,
     create_tables,
     get_columns,

@@ -10,11 +10,14 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+
+from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
+
 from sqlalchemy.engine import Engine
 
-from metatracker import CONFIGURATION
-from metatracker.database import create_engine, create_session
-from metatracker.database.tables import (
+from swxsoc.db.tracker import CONFIGURATION
+from swxsoc.db.tracker.database import create_engine, create_session
+from swxsoc.db.tracker.database.tables import (
     create_tables,
     get_columns,
     populate_file_level_table,
@@ -23,11 +26,11 @@ from metatracker.database.tables import (
     populate_instrument_table,
     sync_instrument_configuration_schema,
 )
-from metatracker.database.tables.file_level_table import FileLevelTable
-from metatracker.database.tables.file_type_table import FileTypeTable
-from metatracker.database.tables.instrument_configuration_table import InstrumentConfigurationTable
-from metatracker.database.tables.instrument_table import InstrumentTable
-from metatracker.database.tables.science_product_table import ScienceProductTable
+from swxsoc.db.tracker.database.tables.file_level_table import FileLevelTable
+from swxsoc.db.tracker.database.tables.file_type_table import FileTypeTable
+from swxsoc.db.tracker.database.tables.instrument_configuration_table import InstrumentConfigurationTable
+from swxsoc.db.tracker.database.tables.instrument_table import InstrumentTable
+from swxsoc.db.tracker.database.tables.science_product_table import ScienceProductTable
 
 MISSION_NAME = CONFIGURATION.mission_name
 
@@ -280,7 +283,7 @@ def test_existing_fk_references_survive_upsert() -> None:
 def test_sync_schema_rejects_invalid_column_name(monkeypatch: Any) -> None:
     """sync_instrument_configuration_schema raises ValueError when a missing
     column does not match the ``instrument_N_id`` naming pattern."""
-    import metatracker.database.tables as tables_pkg
+    import swxsoc.db.tracker.database.tables as tables_pkg
 
     engine = _setup_db()
 

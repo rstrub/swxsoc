@@ -1,6 +1,6 @@
 import logging
 
-from metatracker import get_config, log, set_config
+from swxsoc.db.tracker import get_config, log, set_config
 
 
 def test_log() -> None:
@@ -8,7 +8,7 @@ def test_log() -> None:
     Test log
     """
 
-    # Check if log is created
+    # Check if log is createdk
     assert log is not None
 
     # Check if log is a logger

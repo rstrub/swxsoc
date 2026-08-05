@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlalchemy import Column, String
 
-from metatracker import CONFIGURATION
+from swxsoc.db.tracker import CONFIGURATION
 
 from . import base_table as Base
 

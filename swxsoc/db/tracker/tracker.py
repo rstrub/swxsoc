@@ -7,15 +7,15 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from metatracker import log
-from metatracker.database import check_connection, create_session
-from metatracker.database.tables.file_level_table import FileLevelTable
-from metatracker.database.tables.file_type_table import FileTypeTable
-from metatracker.database.tables.instrument_configuration_table import InstrumentConfigurationTable
-from metatracker.database.tables.instrument_table import InstrumentTable
-from metatracker.database.tables.science_file_table import ScienceFileTable
-from metatracker.database.tables.science_product_table import ScienceProductTable
-from metatracker.database.tables.status_table import StatusTable
+from swxsoc.db.tracker import log
+from swxsoc.db.tracker.database import check_connection, create_session
+from swxsoc.db.tracker.database.tables.file_level_table import FileLevelTable
+from swxsoc.db.tracker.database.tables.file_type_table import FileTypeTable
+from swxsoc.db.tracker.database.tables.instrument_configuration_table import InstrumentConfigurationTable
+from swxsoc.db.tracker.database.tables.instrument_table import InstrumentTable
+from swxsoc.db.tracker.database.tables.science_file_table import ScienceFileTable
+from swxsoc.db.tracker.database.tables.science_product_table import ScienceProductTable
+from swxsoc.db.tracker.database.tables.status_table import StatusTable
 
 db_retry = retry(
     reraise=True,

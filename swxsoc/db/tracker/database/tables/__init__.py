@@ -11,8 +11,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.sql.schema import Table
 
-from metatracker import CONFIGURATION, log
-from metatracker.database import create_session
+from swxsoc.db.tracker import CONFIGURATION, log
+from swxsoc.db.tracker.database import create_session
 
 from . import file_level_table as FileLevelTable
 from . import file_type_table as FileTypeTable
@@ -515,7 +515,7 @@ def create_tables(engine: Engine) -> None:
     log.debug("create_tables: starting")
 
     # --- 1. Create all tables at once (no-op if they already exist) ---
-    from metatracker.database.tables.base_table import Base
+    from swxsoc.db.tracker.database.tables.base_table import Base
 
     Base.metadata.create_all(engine)
     log.debug("create_tables: Base.metadata.create_all complete")
