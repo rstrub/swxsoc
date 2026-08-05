@@ -9,3 +9,9 @@ Latest
 Initial project release 
 
 - Initial Release 
+
+Latest
+======
+
+* Added optional tracker support under ``swxsoc.db.tracker``.
+* Added a new ``tracker`` extra for SQLAlchemy and tenacity.

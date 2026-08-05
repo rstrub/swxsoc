@@ -58,9 +58,15 @@ fits = [
   'astropy>=5.3.3',  # astropy.io.fits already included in base
 ]
 
-# All file format support (currently just adds CDF since FITS is in base)
+# Metadata tracking support for database-backed file tracking workflows
+tracker = [
+  'sqlalchemy>=2.0.0,<3.0.0',
+  'tenacity>=9.1.2',
+]
+
+# All optional support (file formats and tracker functionality)
 all = [
-  "swxsoc[cdf,fits]",
+  "swxsoc[cdf,fits,tracker]",
 ]
 
 dev = [
@@ -102,6 +108,7 @@ testpaths = [
    "swxsoc/io/tests",
    "swxsoc/net/tests",
    "swxsoc/db/tests",
+  "swxsoc/db/tracker/tests",
    "swxsoc/comm/tests",
    "docs"
 ]

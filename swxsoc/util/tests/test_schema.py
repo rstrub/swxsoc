@@ -13,11 +13,11 @@ from numpy.random import random
 from swxsoc.swxdata import SWXData
 from swxsoc.util import const
 from swxsoc.util.schema import SWXSchema
+from pathlib import Path
 
 # Skip all tests in this module if spacepy is not available
 spacepy = pytest.importorskip("spacepy.pycdf")
 from spacepy.pycdf import CDF  # noqa: E402
-
 
 def get_test_sw_data():
     ts = TimeSeries()
@@ -97,6 +97,9 @@ def test_sw_data_schema():
 
 def test_load_yaml_data():
     """Test Loading Yaml Data for Schema Files"""
+    
+    pytest.importorskip("sammi.cdf_attribute_manager")
+    
     with tempfile.TemporaryDirectory() as tmpdirname:
         # This function writes invalid YAML content into a file
         invalid_yaml = """
@@ -104,12 +107,13 @@ def test_load_yaml_data():
         age 30
         """
 
-        with open(tmpdirname + "test.yaml", "w") as file:
+        path = Path(tmpdirname) / "test.yaml"
+        with open(path, "w") as file:
             file.write(invalid_yaml)
 
         # Load from an non-existant file
         with pytest.raises(yaml.YAMLError):
-            _ = SWXSchema()._load_yaml_data(tmpdirname + "test.yaml")
+            _ = SWXSchema()._load_yaml_data(path)
 
 
 def test_global_attributes():
