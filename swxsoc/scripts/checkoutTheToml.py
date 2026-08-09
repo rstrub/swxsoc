@@ -1,4 +1,7 @@
-import tomllib
+try:
+    import tomllib
+except ImportError:  # Python < 3.11
+    import tomli as tomllib
 from pprint import pprint
 
 with open("pyproject.toml", "rb") as f:

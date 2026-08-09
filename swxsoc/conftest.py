@@ -35,7 +35,7 @@ def pytest_ignore_collect(collection_path, config):
 
 
 @pytest.fixture(autouse=True, scope="function")
-def default_test_mission(monkeypatch):
+def default_test_mission(monkeypatch, request):
     """
     Automatically set HERMES as the default mission for all tests.
     
@@ -49,10 +49,18 @@ def default_test_mission(monkeypatch):
     Note: This does NOT affect doctests. Doctests must explicitly set the
     mission in their example code if they need a specific mission configuration.
     """
-    # Only set if not already set (allows tests to override)
-    if "SWXSOC_MISSION" not in os.environ:
-        monkeypatch.setenv("SWXSOC_MISSION", "hermes")
-        swxsoc.reconfigure()
+    try:
+        path = Path(str(request.node.fspath))
+    except Exception:
+        path = Path("")
+
+    if TRACKER_TESTS_DIR in (path, *path.parents):
+        mission = "padre"
+    else:
+        mission = "hermes"
+
+    monkeypatch.setenv("SWXSOC_MISSION", mission)
+    swxsoc.reconfigure()
 
 
 @pytest.fixture(scope="function")
