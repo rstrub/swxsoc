@@ -12,7 +12,8 @@ from swxsoc.db.tracker.database.tables.science_product_table import ScienceProdu
 from swxsoc.db.tracker.database.tables.status_table import StatusTable
 from swxsoc.db.tracker import tracker
 
-TEST_DB_HOST = "sqlite://"
+# to see a real database: TEST_DB_HOST = "sqlite:///test_tracker.db"
+TEST_DB_HOST = "sqlite://"  # in memory database for testing
 TEST_RANDOM_FILENAME = _test_files_directory / "ducks.txt"
 TEST_SCIENCE_FILENAME = _test_files_directory / "padreMDA0_250403185914.dat"
 TEST_BAD_SCIENCE_FILENAME = _test_files_directory / "hermes_NEM_2l_2022259-030002_v01.bin"

@@ -546,6 +546,21 @@ def create_tables(engine: Engine) -> None:
     log.debug("create_tables: complete")
 
 
+def set_up_tables(engine: Engine, session: sessionmaker[Session] | None = None) -> None:
+    """Backward-compatible wrapper for legacy MetaTracker callers.
+
+    Parameters
+    ----------
+    engine : Engine
+        SQLAlchemy engine connected to the database.
+    session : sessionmaker[Session] | None
+        Deprecated and unused. Kept only for API compatibility with older
+        call sites that passed both ``engine`` and ``session``.
+    """
+    _ = session
+    create_tables(engine)
+
+
 def remove_tables(engine: Engine) -> None:
     """
     Remove all tables from the database.
