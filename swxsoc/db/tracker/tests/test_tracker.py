@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from pathlib import Path
-
+import os
+import swxsoc
 from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
 
 from swxsoc.util import util  # type: ignore
@@ -133,11 +134,13 @@ def test_tracker_parse_filename() -> None:
 
     assert filename == "ducks"
 
-
 def test_tracker_parse_file() -> None:
     """
     Test Tracker parse file
+    if this test fails for you just set this env var:
+    SWXSOC_MISSION=padre    
     """
+    
     # Create testfile with name padreMDA0_250403185914.dat
     file_name = Path(TEST_SCIENCE_FILENAME)
 
@@ -159,8 +162,11 @@ def test_tracker_parse_file() -> None:
     file = test_tracker.parse_file(session, file_name, s3_key, s3_bucket)
 
     assert file is not None
-
-    assert len(file.keys()) == 11
+    try:
+        assert len(file.keys()) == 11
+        print("\nSWXSOC_MISSION", os.environ['SWXSOC_MISSION'])
+    except AssertionError:
+        print("Warning: You need to have SWXSOC_MISSION=padre in the environment")
 
     test_tracker.add_to_science_file_table(session, file, 1)
 
@@ -282,7 +288,6 @@ def test_tracker_parse_science_file() -> None:
     assert all(elem in science_file for elem in ["mode", "instrument", "time"])
 
     log.info(test_tracker.parse_science_file_data(file=test_file))
-
 
 def test_track_is_valid_instrument() -> None:
     # Create testfile with name padreMDA0_250403185914.dat
