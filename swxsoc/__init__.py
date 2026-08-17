@@ -26,9 +26,10 @@ def reconfigure():
     Reconfigure the module by reloading the configuration.
 
     This function reloads the configuration from the config.yml file
-    and updates the global `config` variable. It is useful for testing
-    purposes when changes to the configuration file need to be applied
-    without restarting the Python session.
+    and updates the global `config` variable. It also reloads dependent
+    configurations (e.g., tracker) if their modules have been imported.
+    This is useful for testing purposes when changes to the configuration
+    file need to be applied without restarting the Python session.
 
     Example:
         from swxsoc import reconfigure
@@ -38,6 +39,20 @@ def reconfigure():
     """
     global config
     config = load_config()
+    
+    # Reload tracker configuration if it has been imported
+    import sys
+    if 'swxsoc.db.tracker' in sys.modules:
+        try:
+            from swxsoc.db import tracker
+            #print(f"DEBUG: Reloading tracker config from reconfigure()")
+            tracker.set_config()
+            #print(f"DEBUG: Tracker config reloaded, mission={tracker.CONFIGURATION.mission_name}")
+        except ImportError as e:
+            #print(f"DEBUG: Failed to import tracker: {e}")
+            pass  # tracker dependencies not available
+    else:
+        print(f"DEBUG: Tracker not in sys.modules, skipping reload")
 
 
 # Then you can be explicit to control what ends up in the namespace,

@@ -5,7 +5,7 @@ Module for configuration of the application.
 from itertools import combinations
 from typing import Any, Dict, List, Optional
 
-from swxsoc import config as swxsoc_config  # type: ignore
+import swxsoc
 
 # Default Database Host
 DEFAULT_DB_HOST = "sqlite:///"
@@ -190,7 +190,7 @@ class MetaTrackerConfiguration:
             Configuration dictionary loaded from SWxSOC Config
         """
         # Get the Mission Configuration for the current SWxSOC Mission
-        mission_config = swxsoc_config["mission"]
+        mission_config = swxsoc.config["mission"]
         # Get the list of instruments from the Mission Configuration
         instruments = mission_config["inst_names"]
 
