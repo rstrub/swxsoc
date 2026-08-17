@@ -21,7 +21,6 @@ def set_config(config: Optional[dict[str, Any]] = None) -> None:
     global CONFIGURATION
 
     if config is None:
-        swxsoc.reconfigure()
         CONFIGURATION = load_config()
         return
 
