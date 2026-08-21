@@ -3,7 +3,7 @@ from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import declarative_base
 
-from swxsoc.db.tracker import CONFIGURATION
+from swxsoc.db.tracker import get_config
 from swxsoc.db.tracker.database import create_engine, create_session
 from swxsoc.db.tracker.database.tables import (
     create_table,
@@ -14,12 +14,13 @@ from swxsoc.db.tracker.database.tables import (
     table_exists,
 )
 
-MISSION_NAME = CONFIGURATION.mission_name
-
 
 def test_get_tables() -> None:
     # Create engine and session
     engine = create_engine("sqlite://")
+    
+    # Get mission name at runtime
+    MISSION_NAME = get_config().mission_name
 
     # Create Base
     Base = declarative_base()
@@ -104,6 +105,9 @@ def test_table_exists() -> None:
 
 
 def test_create_tables() -> None:
+    # Get mission name at runtime
+    MISSION_NAME = get_config().mission_name
+    
     # Create engine and session
     engine = create_engine("sqlite://")
     create_session(engine)
@@ -135,6 +139,9 @@ def test_create_tables() -> None:
 
 
 def test_create_tables_existing() -> None:
+    # Get mission name at runtime
+    MISSION_NAME = get_config().mission_name
+    
     # Create engine and session
     engine = create_engine("sqlite://")
     create_session(engine)
@@ -169,6 +176,9 @@ def test_create_tables_existing() -> None:
 
 
 def test_remove_tables() -> None:
+    # Get mission name at runtime
+    MISSION_NAME = get_config().mission_name
+    
     # Create engine and session
     engine = create_engine("sqlite://")
 

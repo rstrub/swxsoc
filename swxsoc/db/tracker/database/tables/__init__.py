@@ -514,9 +514,21 @@ def create_tables(engine: Engine) -> None:
     """
     log.debug("create_tables: starting")
 
-    # --- 1. Create all tables at once (no-op if they already exist) ---
-    from swxsoc.db.tracker.database.tables.base_table import Base
+    # --- 1. Create all table classes and register them with metadata ---
+    from swxsoc.db.tracker.database.tables.base_table import get_or_create_base
 
+    Base = get_or_create_base()
+    
+    # Create all table classes - this registers them with Base.metadata
+    file_level_class = FileLevelTable.return_class()
+    file_type_class = FileTypeTable.return_class()
+    instrument_class = InstrumentTable.return_class()
+    instrument_config_class = InstrumentConfigurationTable.return_class()
+    science_file_class = ScienceFileTable.return_class()
+    science_product_class = ScienceProductTable.return_class()
+    status_class = StatusTable.return_class()
+    
+    # Now create all tables (no-op if they already exist)
     Base.metadata.create_all(engine)
     log.debug("create_tables: Base.metadata.create_all complete")
 
@@ -525,11 +537,6 @@ def create_tables(engine: Engine) -> None:
 
     # --- 3. Upsert lookup / configuration tables ---
     session = create_session(engine)
-
-    file_level_class = FileLevelTable.return_class()
-    file_type_class = FileTypeTable.return_class()
-    instrument_class = InstrumentTable.return_class()
-    instrument_config_class = InstrumentConfigurationTable.return_class()
 
     log.debug("create_tables: upserting file level table")
     populate_file_level_table(session, CONFIGURATION.file_levels, file_level_class)

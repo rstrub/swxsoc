@@ -8,9 +8,11 @@ from swxsoc.util import util  # type: ignore
 from swxsoc.db.tracker import _test_files_directory, log
 from swxsoc.db.tracker.database import create_engine, create_session
 from swxsoc.db.tracker.database.tables import create_tables
-from swxsoc.db.tracker.database.tables.science_file_table import ScienceFileTable
-from swxsoc.db.tracker.database.tables.science_product_table import ScienceProductTable
-from swxsoc.db.tracker.database.tables.status_table import StatusTable
+from swxsoc.db.tracker.database.tables import (
+    science_file_table,
+    science_product_table,
+    status_table,
+)
 from swxsoc.db.tracker import tracker
 
 # to see a real database: TEST_DB_HOST = "sqlite:///test_tracker.db"
@@ -140,6 +142,8 @@ def test_tracker_parse_file() -> None:
     if this test fails for you just set this env var:
     SWXSOC_MISSION=padre    
     """
+    # Get table classes at runtime
+    ScienceFileTable = science_file_table.return_class()
     
     # Create testfile with name padreMDA0_250403185914.dat
     file_name = Path(TEST_SCIENCE_FILENAME)
@@ -186,6 +190,10 @@ def test_add_to_status_table() -> None:
     """
     Test add_to_status_table function
     """
+    # Get table classes at runtime
+    ScienceFileTable = science_file_table.return_class()
+    StatusTable = status_table.return_class()
+    
     # Setup: Create a test database and session
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
@@ -409,6 +417,11 @@ def test_map_instrument_list() -> None:
 
 
 def test_track() -> None:
+    # Get table classes at runtime
+    ScienceFileTable = science_file_table.return_class()
+    ScienceProductTable = science_product_table.return_class()
+    StatusTable = status_table.return_class()
+    
     # Create testfile with name padreMDA0_250403185914.dat
     engine = create_engine(TEST_DB_HOST)
 
@@ -484,6 +497,11 @@ def test_add_to_status_table_with_origin_files() -> None:
     """
     Test add_to_status_table with origin files
     """
+    # Get table classes at runtime
+    ScienceFileTable = science_file_table.return_class()
+    ScienceProductTable = science_product_table.return_class()
+    StatusTable = status_table.return_class()
+    
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
     create_tables(engine=engine)

@@ -9,13 +9,9 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from swxsoc.db.tracker import log
 from swxsoc.db.tracker.database import check_connection, create_session
-from swxsoc.db.tracker.database.tables.file_level_table import FileLevelTable
-from swxsoc.db.tracker.database.tables.file_type_table import FileTypeTable
-from swxsoc.db.tracker.database.tables.instrument_configuration_table import InstrumentConfigurationTable
-from swxsoc.db.tracker.database.tables.instrument_table import InstrumentTable
-from swxsoc.db.tracker.database.tables.science_file_table import ScienceFileTable
-from swxsoc.db.tracker.database.tables.science_product_table import ScienceProductTable
-from swxsoc.db.tracker.database.tables.status_table import StatusTable
+from swxsoc.db.tracker.database.tables import file_level_table, file_type_table, instrument_table
+from swxsoc.db.tracker.database.tables import instrument_configuration_table
+from swxsoc.db.tracker.database.tables import science_file_table, science_product_table, status_table
 
 db_retry = retry(
     reraise=True,
@@ -165,6 +161,8 @@ class MetaTracker:
             The ``science_file_id`` of the inserted or existing record,
             or ``0`` if ``parsed_file`` is empty.
         """
+        # Get table class at runtime
+        ScienceFileTable = science_file_table.return_class()
 
         with session.begin() as sql_session:
             if not parsed_file:
@@ -226,6 +224,8 @@ class MetaTracker:
         int
             The ``science_product_id`` of the inserted or existing record.
         """
+        # Get table class at runtime
+        ScienceProductTable = science_product_table.return_class()
 
         with session.begin() as sql_session:
             # Check if science product exists with same instrument configuration id, mode, and reference timestamp
@@ -298,6 +298,9 @@ class MetaTracker:
         ValueError
             If ``origin_file_ids`` is not a list of integers.
         """
+        # Get table classes at runtime
+        ScienceFileTable = science_file_table.return_class()
+        StatusTable = status_table.return_class()
 
         with session.begin() as sql_session:
             # Validate and fetch origin files if provided
@@ -551,6 +554,7 @@ class MetaTracker:
         bool
             ``True`` if the instrument short name is found in the database.
         """
+        InstrumentTable = instrument_table.return_class()
         with session.begin() as sql_session:
             instruments = sql_session.query(InstrumentTable).all()
             valid_instrument_short_names = [instrument.short_name for instrument in instruments]
@@ -573,6 +577,7 @@ class MetaTracker:
         str
             Short name of the matching file type.
         """
+        FileTypeTable = file_type_table.return_class()
         with session.begin() as sql_session:
             file_type = sql_session.query(FileTypeTable).filter(FileTypeTable.extension == extension).first()
 
@@ -594,6 +599,7 @@ class MetaTracker:
         bool
             ``True`` if the extension matches a known file type.
         """
+        FileTypeTable = file_type_table.return_class()
         with session.begin() as sql_session:
             file_types = sql_session.query(FileTypeTable).all()
             valid_extensions = [file_type.extension for file_type in file_types]
@@ -616,6 +622,7 @@ class MetaTracker:
         bool
             ``True`` if the file level is found in the database.
         """
+        FileLevelTable = file_level_table.return_class()
         with session.begin() as sql_session:
             file_levels = sql_session.query(FileLevelTable).all()
             valid_file_levels = [file_level.short_name for file_level in file_levels]
@@ -685,6 +692,7 @@ class MetaTracker:
             Mapping of instrument IDs to their short names.
             Example: ``{1: "meddea", 2: "sharp"}``.
         """
+        InstrumentTable = instrument_table.return_class()
         with session.begin() as sql_session:
             instruments = sql_session.query(InstrumentTable).all()
             result: dict[int, str] = {
@@ -710,6 +718,7 @@ class MetaTracker:
             Mapping of configuration IDs to sorted lists of instrument short names.
             Example: ``{1: ["meddea"], 2: ["sharp"]}``.
         """
+        InstrumentConfigurationTable = instrument_configuration_table.return_class()
         with session.begin() as sql_session:
             # Get amount of instruments from InstrumentTable
             instruments = self.get_instruments(session)
