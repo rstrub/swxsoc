@@ -110,7 +110,7 @@ class MetaTrackerConfiguration:
     mission_name: str
     instruments: List[Dict[str, Any]]
     instrument_configurations: List[Dict[str, Any]]
-    file_levels: List[Dict[str, Any]]
+    data_levels: List[Dict[str, Any]]
     file_types: List[Dict[str, Any]]
 
     def __init__(self, config: Optional[Dict[str, Any]], use_swxsoc: bool = True) -> None:
@@ -121,7 +121,7 @@ class MetaTrackerConfiguration:
         ----------
         config : dict[str, Any] or None
             Configuration dictionary. Required keys are ``mission_name``, ``instruments``, and
-            ``instrument_configurations``. Optional keys include ``db_host``, ``file_levels``, and
+            ``instrument_configurations``. Optional keys include ``db_host``, ``data_levels``, and
             ``file_types``, which fall back to package defaults if not provided. Pass ``None`` or an
             empty dict to rely entirely on ``use_swxsoc`` population.
         use_swxsoc : bool, optional
@@ -153,8 +153,8 @@ class MetaTrackerConfiguration:
         # Set Default values for keys that are not present in the config
         if "db_host" not in config:
             config["db_host"] = DEFAULT_DB_HOST
-        if "file_levels" not in config:
-            config["file_levels"] = list(DEFAULT_FILE_LEVELS.values())
+        if "data_levels" not in config:
+            config["data_levels"] = list(DEFAULT_FILE_LEVELS.values())
         if "file_types" not in config:
             config["file_types"] = DEFAULT_FILE_TYPES
 
@@ -162,14 +162,14 @@ class MetaTrackerConfiguration:
         self.mission_name = config["mission_name"]
         self.instruments = config["instruments"]
         self.instrument_configurations = config["instrument_configurations"]
-        self.file_levels = config["file_levels"]
+        self.data_levels = config["data_levels"]
         self.file_types = config["file_types"]
 
     def __repr__(self) -> str:
         return (
             f"MetaTrackerConfiguration(db_host={self.db_host}, mission_name={self.mission_name},"
             f" instruments={self.instruments}, instrument_configurations={self.instrument_configurations},"
-            f" file_levels={self.file_levels}, file_types={self.file_types})"
+            f" data_levels={self.data_levels}, file_types={self.file_types})"
         )
 
     def __str__(self) -> str:
@@ -216,19 +216,23 @@ class MetaTrackerConfiguration:
                 instrument_configurations.append(config)
                 config_id += 1
 
-        # Configure valid data levels to track
-        file_levels = []
-        for level in mission_config["valid_data_levels"]:
-            if level in DEFAULT_FILE_LEVELS:
-                file_levels.append(DEFAULT_FILE_LEVELS[level])
-            else:
-                raise ValueError(
-                    f"Invalid data level '{level}' found in SWxSOC mission configuration, but not in MetaTracker defaults."
-                )
+        # Configure data levels to track - read directly from swxsoc config
+        data_levels = mission_config.get("data_levels")
+        if data_levels is None:
+            # Fallback to transforming valid_data_levels with DEFAULT_FILE_LEVELS
+            # for backward compatibility with missions that haven't added data_levels yet
+            data_levels = []
+            for level in mission_config["valid_data_levels"]:
+                if level in DEFAULT_FILE_LEVELS:
+                    data_levels.append(DEFAULT_FILE_LEVELS[level])
+                else:
+                    raise ValueError(
+                        f"Invalid data level '{level}' found in SWxSOC mission configuration, but not in MetaTracker defaults."
+                    )
 
         metatracker_config = {
             "mission_name": mission_config["mission_name"],
-            "file_levels": file_levels,
+            "data_levels": data_levels,
             "instruments": instruments_list,
             "instrument_configurations": instrument_configurations,
         }

@@ -20,13 +20,13 @@ from swxsoc.db.tracker.database import create_engine, create_session
 from swxsoc.db.tracker.database.tables import (
     create_tables,
     get_columns,
-    populate_file_level_table,
+    populate_data_level_table,
     populate_file_type_table,
     populate_instrument_configuration_table,
     populate_instrument_table,
     sync_instrument_configuration_schema,
 )
-from swxsoc.db.tracker.database.tables import file_level_table, file_type_table, instrument_table
+from swxsoc.db.tracker.database.tables import data_level_table, file_type_table, instrument_table
 from swxsoc.db.tracker.database.tables import instrument_configuration_table
 from swxsoc.db.tracker.database.tables import science_product_table
 
@@ -42,7 +42,7 @@ def test_create_tables_idempotent() -> None:
     """Calling ``create_tables`` multiple times must not raise and must leave
     row counts unchanged."""
     # Get table classes at runtime
-    FileLevelTable = file_level_table.return_class()
+    DataLevelTable = data_level_table.return_class()
     FileTypeTable = file_type_table.return_class()
     InstrumentTable = instrument_table.return_class()
     InstrumentConfigurationTable = instrument_configuration_table.return_class()
@@ -55,7 +55,7 @@ def test_create_tables_idempotent() -> None:
             return s.query(table_cls).count()  # type: ignore[no-any-return]
 
     counts_first = {
-        "file_level": _count(FileLevelTable),
+        "data_level": _count(DataLevelTable),
         "file_type": _count(FileTypeTable),
         "instrument": _count(InstrumentTable),
         "instrument_config": _count(InstrumentConfigurationTable),
@@ -66,7 +66,7 @@ def test_create_tables_idempotent() -> None:
     create_tables(engine)
 
     counts_after = {
-        "file_level": _count(FileLevelTable),
+        "data_level": _count(DataLevelTable),
         "file_type": _count(FileTypeTable),
         "instrument": _count(InstrumentTable),
         "instrument_config": _count(InstrumentConfigurationTable),
@@ -75,38 +75,38 @@ def test_create_tables_idempotent() -> None:
     assert counts_first == counts_after
 
 
-def test_upsert_inserts_new_file_level() -> None:
-    """A new file level added to the config list is inserted on the next call."""
-    FileLevelTable = file_level_table.return_class()
+def test_upsert_inserts_new_data_level() -> None:
+    """A new data level added to the config list is inserted on the next call."""
+    DataLevelTable = data_level_table.return_class()
     engine = _setup_db()
     session = create_session(engine)
 
     new_level = {"short_name": "l5", "full_name": "Level 5", "description": "Level 5 File"}
-    extended_levels = get_config().file_levels + [new_level]
+    extended_levels = get_config().data_levels + [new_level]
 
-    populate_file_level_table(session, extended_levels, FileLevelTable)
+    populate_data_level_table(session, extended_levels, DataLevelTable)
 
     with session.begin() as s:
-        row = s.query(FileLevelTable).filter_by(short_name="l5").first()
+        row = s.query(DataLevelTable).filter_by(short_name="l5").first()
         assert row is not None
         assert row.full_name == "Level 5"
         assert row.description == "Level 5 File"
 
 
-def test_upsert_updates_existing_file_level() -> None:
-    """Changed metadata on an existing file level is updated in place."""
-    FileLevelTable = file_level_table.return_class()
+def test_upsert_updates_existing_data_level() -> None:
+    """Changed metadata on an existing data level is updated in place."""
+    DataLevelTable = data_level_table.return_class()
     engine = _setup_db()
     session = create_session(engine)
 
     # Mutate the first level's description
-    mutated_levels = [dict(fl) for fl in get_config().file_levels]
+    mutated_levels = [dict(fl) for fl in get_config().data_levels]
     mutated_levels[0]["description"] = "UPDATED DESCRIPTION"
 
-    populate_file_level_table(session, mutated_levels, FileLevelTable)
+    populate_data_level_table(session, mutated_levels, DataLevelTable)
 
     with session.begin() as s:
-        row = s.query(FileLevelTable).filter_by(short_name=mutated_levels[0]["short_name"]).first()
+        row = s.query(DataLevelTable).filter_by(short_name=mutated_levels[0]["short_name"]).first()
         assert row is not None
         assert row.description == "UPDATED DESCRIPTION"
 
@@ -323,19 +323,19 @@ def test_sync_schema_rejects_invalid_column_name(monkeypatch: Any) -> None:
 
 def test_upsert_preserves_orphaned_rows() -> None:
     """Rows in lookup tables that are no longer in config survive the upsert."""
-    FileLevelTable = file_level_table.return_class()
+    DataLevelTable = data_level_table.return_class()
     engine = _setup_db()
     session = create_session(engine)
 
     # Verify the first file level exists
-    first_level = get_config().file_levels[0]["short_name"]
+    first_level = get_config().data_levels[0]["short_name"]
     with session.begin() as s:
-        assert s.query(FileLevelTable).filter_by(short_name=first_level).first() is not None
+        assert s.query(DataLevelTable).filter_by(short_name=first_level).first() is not None
 
     # Upsert with a subset that excludes the first level
-    subset_levels = get_config().file_levels[1:]
-    populate_file_level_table(session, subset_levels, FileLevelTable)
+    subset_levels = get_config().data_levels[1:]
+    populate_data_level_table(session, subset_levels, DataLevelTable)
 
     # The excluded level must still be in the DB (orphan preserved)
     with session.begin() as s:
-        assert s.query(FileLevelTable).filter_by(short_name=first_level).first() is not None
+        assert s.query(DataLevelTable).filter_by(short_name=first_level).first() is not None

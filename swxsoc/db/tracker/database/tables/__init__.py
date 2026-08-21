@@ -14,7 +14,7 @@ from sqlalchemy.sql.schema import Table
 from swxsoc.db.tracker import CONFIGURATION, log
 from swxsoc.db.tracker.database import create_session
 
-from . import file_level_table as FileLevelTable
+from . import data_level_table as DataLevelTable
 from . import file_type_table as FileTypeTable
 from . import instrument_configuration_table as InstrumentConfigurationTable
 from . import instrument_table as InstrumentTable
@@ -54,7 +54,7 @@ def get_table_modules() -> list[ModuleType]:
     """
 
     modules = [
-        FileLevelTable,
+        DataLevelTable,
         FileTypeTable,
         InstrumentTable,
         InstrumentConfigurationTable,
@@ -190,51 +190,51 @@ def get_columns(engine: Engine, table_name: str) -> list[dict[str, Any]]:
     return inspector.get_columns(table_name)  # type: ignore[return-value]
 
 
-def populate_file_level_table(
-    sql_session: sessionmaker[Session], file_levels: list[dict[str, Any]], file_level_table: Any
+def populate_data_level_table(
+    sql_session: sessionmaker[Session], data_levels: list[dict[str, Any]], data_level_table: Any
 ) -> None:
     """
-    Upsert the file level table with the configured file levels.
+    Upsert the data level table with the configured data levels.
 
-    Inserts new file levels and updates metadata (``full_name``, ``description``)
-    on existing rows. Rows present in the database but absent from *file_levels*
+    Inserts new data levels and updates metadata (``full_name``, ``description``)
+    on existing rows. Rows present in the database but absent from *data_levels*
     are left in place for foreign-key integrity.
 
     Parameters
     ----------
     sql_session : sessionmaker[Session]
         SQLAlchemy session factory.
-    file_levels : list[dict[str, Any]]
-        List of file level dictionaries, each containing ``short_name``,
+    data_levels : list[dict[str, Any]]
+        List of data level dictionaries, each containing ``short_name``,
         ``full_name``, and ``description`` keys.
-    file_level_table : type
-        The ORM class for the file level table.
+    data_level_table : type
+        The ORM class for the data level table.
     """
-    log.debug("Upserting File Level Table")
+    log.debug("Upserting Data Level Table")
     with sql_session.begin() as session:
-        for file_level in file_levels:
-            existing = session.query(file_level_table).filter_by(short_name=file_level["short_name"]).first()
+        for data_level in data_levels:
+            existing = session.query(data_level_table).filter_by(short_name=data_level["short_name"]).first()
             if existing is None:
-                log.debug(f"Inserting new file level '{file_level['short_name']}' into File Level Table")
+                log.debug(f"Inserting new data level '{data_level['short_name']}' into Data Level Table")
                 session.add(
-                    file_level_table(
-                        full_name=file_level["full_name"],
-                        short_name=file_level["short_name"],
-                        description=file_level["description"],
+                    data_level_table(
+                        full_name=data_level["full_name"],
+                        short_name=data_level["short_name"],
+                        description=data_level["description"],
                     )
                 )
             else:
                 updated_fields: list[str] = []
-                if existing.full_name != file_level["full_name"]:
-                    existing.full_name = file_level["full_name"]
+                if existing.full_name != data_level["full_name"]:
+                    existing.full_name = data_level["full_name"]
                     updated_fields.append("full_name")
-                if existing.description != file_level["description"]:
-                    existing.description = file_level["description"]
+                if existing.description != data_level["description"]:
+                    existing.description = data_level["description"]
                     updated_fields.append("description")
                 if updated_fields:
-                    log.debug(f"Updated file level '{file_level['short_name']}' fields: {', '.join(updated_fields)}")
+                    log.debug(f"Updated data level '{data_level['short_name']}' fields: {', '.join(updated_fields)}")
                 else:
-                    log.debug(f"File level '{file_level['short_name']}' is up to date, no changes needed")
+                    log.debug(f"Data level '{data_level['short_name']}' is up to date, no changes needed")
 
 
 def populate_file_type_table(
@@ -520,7 +520,7 @@ def create_tables(engine: Engine) -> None:
     Base = get_or_create_base()
     
     # Create all table classes - this registers them with Base.metadata
-    file_level_class = FileLevelTable.return_class()
+    data_level_class = DataLevelTable.return_class()
     file_type_class = FileTypeTable.return_class()
     instrument_class = InstrumentTable.return_class()
     instrument_config_class = InstrumentConfigurationTable.return_class()
@@ -538,8 +538,8 @@ def create_tables(engine: Engine) -> None:
     # --- 3. Upsert lookup / configuration tables ---
     session = create_session(engine)
 
-    log.debug("create_tables: upserting file level table")
-    populate_file_level_table(session, CONFIGURATION.file_levels, file_level_class)
+    log.debug("create_tables: upserting data level table")
+    populate_data_level_table(session, CONFIGURATION.data_levels, data_level_class)
 
     log.debug("create_tables: upserting file type table")
     populate_file_type_table(session, CONFIGURATION.file_types, file_type_class)

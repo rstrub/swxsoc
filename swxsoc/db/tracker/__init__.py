@@ -67,7 +67,7 @@ def set_config(config: Optional[dict[str, Any]] = None) -> None:
     # Clear cached table metadata to prevent mixing missions
     from swxsoc.db.tracker.database.tables import base_table
     from swxsoc.db.tracker.database.tables import (
-        file_level_table,
+        data_level_table,
         file_type_table,
         instrument_table,
         instrument_configuration_table,
@@ -81,7 +81,7 @@ def set_config(config: Optional[dict[str, Any]] = None) -> None:
     
     # Define table modules and their cache attributes to clear
     table_cache_specs = [
-        (file_level_table, ['_cached_class', '_cached_for_mission']),
+        (data_level_table, ['_cached_class', '_cached_for_mission']),
         (file_type_table, ['_cached_class', '_cached_for_mission']),
         (instrument_table, ['_cached_class', '_cached_for_mission']),
         (instrument_configuration_table, ['_cached_table_class', '_cached_for_mission']),

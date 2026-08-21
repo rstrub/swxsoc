@@ -9,7 +9,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 
 from swxsoc.db.tracker import log
 from swxsoc.db.tracker.database import check_connection, create_session
-from swxsoc.db.tracker.database.tables import file_level_table, file_type_table, instrument_table
+from swxsoc.db.tracker.database.tables import data_level_table, file_type_table, instrument_table
 from swxsoc.db.tracker.database.tables import instrument_configuration_table
 from swxsoc.db.tracker.database.tables import science_file_table, science_product_table, status_table
 
@@ -183,7 +183,7 @@ class MetaTracker:
             file = ScienceFileTable(
                 science_product_id=science_product_id,
                 file_type=parsed_file["file_type"],
-                file_level=parsed_file["file_level"],
+                data_level=parsed_file["file_level"],
                 filename=parsed_file["filename"],
                 file_version=parsed_file["file_version"],
                 file_size=parsed_file["file_size"],
@@ -622,12 +622,12 @@ class MetaTracker:
         bool
             ``True`` if the file level is found in the database.
         """
-        FileLevelTable = file_level_table.return_class()
+        DataLevelTable = data_level_table.return_class()
         with session.begin() as sql_session:
-            file_levels = sql_session.query(FileLevelTable).all()
-            valid_file_levels = [file_level.short_name for file_level in file_levels]
+            data_levels = sql_session.query(DataLevelTable).all()
+            valid_data_levels = [data_level.short_name for data_level in data_levels]
 
-            return file_level in valid_file_levels
+            return file_level in valid_data_levels
 
     @staticmethod
     def parse_extension(file: Path) -> str:

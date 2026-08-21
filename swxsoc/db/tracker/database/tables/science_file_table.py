@@ -54,8 +54,8 @@ def return_class() -> Any:
             # File Type Of Science File (Foreign Key)
             file_type = Column(String, ForeignKey(f"{current_mission}_file_type.short_name"))
 
-            # File Level Of Science File (Foreign Key)
-            file_level = Column(String, ForeignKey(f"{current_mission}_file_level.short_name"))
+            # Data Level Of Science File (Foreign Key)
+            data_level = Column(String, ForeignKey(f"{current_mission}_data_level.short_name"))
 
             # Filename Of Science File
             filename = Column(String, unique=True)
@@ -90,7 +90,7 @@ def return_class() -> Any:
                 self,
                 science_product_id: int,
                 file_type: str,
-                file_level: str,
+                data_level: str,
                 filename: str,
                 s3_key: str,
                 s3_bucket: str,
@@ -106,7 +106,7 @@ def return_class() -> Any:
                 """
                 self.science_product_id = science_product_id  # type: ignore[assignment]
                 self.file_type = file_type  # type: ignore[assignment]
-                self.file_level = file_level  # type: ignore[assignment]
+                self.data_level = data_level  # type: ignore[assignment]
                 self.filename = filename  # type: ignore[assignment]
                 self.file_version = file_version  # type: ignore[assignment]
                 self.file_size = file_size  # type: ignore[assignment]

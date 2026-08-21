@@ -117,7 +117,7 @@ def test_create_tables() -> None:
 
     # Expected tables
     table_names = [
-        f"{MISSION_NAME}_file_level",
+        f"{MISSION_NAME}_data_level",
         f"{MISSION_NAME}_instrument_configuration",
         f"{MISSION_NAME}_instrument",
         f"{MISSION_NAME}_file_type",
@@ -151,7 +151,7 @@ def test_create_tables_existing() -> None:
 
     # Expected tables
     table_names = [
-        f"{MISSION_NAME}_file_level",
+        f"{MISSION_NAME}_data_level",
         f"{MISSION_NAME}_instrument_configuration",
         f"{MISSION_NAME}_instrument",
         f"{MISSION_NAME}_file_type",
@@ -187,7 +187,7 @@ def test_remove_tables() -> None:
 
     # Expected tables
     table_names = [
-        f"{MISSION_NAME}_file_level",
+        f"{MISSION_NAME}_data_level",
         f"{MISSION_NAME}_instrument_configuration",
         f"{MISSION_NAME}_instrument",
         f"{MISSION_NAME}_file_type",
@@ -211,4 +211,4 @@ def test_remove_tables() -> None:
     remove_tables(engine=engine)
 
     # Get tables
-    assert not table_exists(engine=engine, table_name=f"{MISSION_NAME}_file_level")
+    assert not table_exists(engine=engine, table_name=f"{MISSION_NAME}_data_level")

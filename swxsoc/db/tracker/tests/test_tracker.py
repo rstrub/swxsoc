@@ -205,7 +205,7 @@ def test_add_to_status_table() -> None:
         science_file = ScienceFileTable(
             science_product_id=1,
             file_type="dat",
-            file_level="L1",
+            data_level="L1",
             filename="test_file",
             file_version="1.0",
             file_size=1024,
@@ -511,7 +511,7 @@ def test_add_to_status_table_with_origin_files() -> None:
         origin_file_1 = ScienceFileTable(
             science_product_id=1,
             file_type="dat",
-            file_level="L1",
+            data_level="L1",
             filename="origin_file_1",
             file_version="1.0",
             file_size=100,
@@ -525,7 +525,7 @@ def test_add_to_status_table_with_origin_files() -> None:
         origin_file_2 = ScienceFileTable(
             science_product_id=1,
             file_type="dat",
-            file_level="L1",
+            data_level="L1",
             filename="origin_file_2",
             file_version="1.0",
             file_size=200,
@@ -544,7 +544,7 @@ def test_add_to_status_table_with_origin_files() -> None:
         science_file = ScienceFileTable(
             science_product_id=1,
             file_type="dat",
-            file_level="L1",
+            data_level="L1",
             filename="target_file",
             file_version="1.0",
             file_size=300,
