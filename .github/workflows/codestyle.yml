@@ -8,3 +8,13 @@ jobs:
       - uses: astral-sh/ruff-action@v3
       - run: ruff check --fix
       - run: ruff format
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install -e ".[style]"
+      - run: mypy

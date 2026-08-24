@@ -91,6 +91,7 @@ test = [
 style = [
   'ruff',
   'rstcheck==6.2.0',
+  'mypy',
 ]
 
 [tool.setuptools.package-data]
@@ -136,6 +137,18 @@ omit = [
   '*/swxsoc/version*',
   '*/swxsoc/scripts/*',
 ]
+
+[tool.mypy]
+# Scoped to swxsoc.db.tracker only -- the rest of swxsoc is not yet type
+# annotated, so we don't enforce mypy repo-wide.
+files = ["swxsoc/db/tracker"]
+disallow_untyped_defs = true
+disallow_any_unimported = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
 
 [tool.rstcheck]
 report_level = "WARNING"
