@@ -39,20 +39,6 @@ def reconfigure():
     """
     global config
     config = load_config()
-    
-    # Reload tracker configuration if it has been imported
-    import sys
-    if 'swxsoc.db.tracker' in sys.modules:
-        try:
-            from swxsoc.db import tracker
-            #print(f"DEBUG: Reloading tracker config from reconfigure()")
-            tracker.set_config()
-            #print(f"DEBUG: Tracker config reloaded, mission={tracker.CONFIGURATION.mission_name}")
-        except ImportError as e:
-            #print(f"DEBUG: Failed to import tracker: {e}")
-            pass  # tracker dependencies not available
-    else:
-        print(f"DEBUG: Tracker not in sys.modules, skipping reload")
 
 
 # Then you can be explicit to control what ends up in the namespace,

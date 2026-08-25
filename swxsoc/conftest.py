@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 import swxsoc
+import swxsoc.db
 
 TRACKER_TESTS_DIR = Path(__file__).parent / "db" / "tracker" / "tests"
 
@@ -49,18 +50,11 @@ def default_test_mission(monkeypatch, request):
     Note: This does NOT affect doctests. Doctests must explicitly set the
     mission in their example code if they need a specific mission configuration.
     """
-    try:
-        path = Path(str(request.node.fspath))
-    except Exception:
-        path = Path("")
-
-    if TRACKER_TESTS_DIR in (path, *path.parents):
-        mission = "padre"
-    else:
-        mission = "hermes"
-
-    monkeypatch.setenv("SWXSOC_MISSION", mission)
-    swxsoc.reconfigure()
+    # Only set if not already set (allows tests to override)
+    if "SWXSOC_MISSION" not in os.environ:
+        monkeypatch.setenv("SWXSOC_MISSION", "hermes")
+        swxsoc.reconfigure()
+        swxsoc.db.reconfigure()
 
 
 @pytest.fixture(scope="function")
@@ -102,6 +96,7 @@ def use_mission(request, monkeypatch):
     mission = request.param if hasattr(request, "param") else "hermes"
     monkeypatch.setenv("SWXSOC_MISSION", mission)
     swxsoc.reconfigure()
+    swxsoc.db.reconfigure()
     yield mission
     # Explicitly reconfigure back to default after test completes
     # This is necessary because swxsoc.config is module-level state
@@ -109,3 +104,5 @@ def use_mission(request, monkeypatch):
     # This ensures the config is reset even if monkeypatch cleanup hasn't run yet
     monkeypatch.setenv("SWXSOC_MISSION", "hermes")
     swxsoc.reconfigure()
+    swxsoc.db.reconfigure()
+

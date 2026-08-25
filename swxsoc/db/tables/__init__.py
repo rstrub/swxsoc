@@ -11,16 +11,18 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.sql.schema import Table
 
-from swxsoc.db.tracker import CONFIGURATION, log
-from swxsoc.db.tracker.database import create_session
-
-from . import data_level_table as DataLevelTable
-from . import file_type_table as FileTypeTable
-from . import instrument_configuration_table as InstrumentConfigurationTable
-from . import instrument_table as InstrumentTable
-from . import science_file_table as ScienceFileTable
-from . import science_product_table as ScienceProductTable
-from . import status_table as StatusTable
+import swxsoc.db
+from swxsoc import log
+from swxsoc.db import create_session
+from swxsoc.db.tables import file_level_table as FileLevelTable
+from swxsoc.db.tables import file_type_table as FileTypeTable
+from swxsoc.db.tables import (
+    instrument_configuration_table as InstrumentConfigurationTable,
+)
+from swxsoc.db.tables import instrument_table as InstrumentTable
+from swxsoc.db.tables import science_file_table as ScienceFileTable
+from swxsoc.db.tables import science_product_table as ScienceProductTable
+from swxsoc.db.tables import status_table as StatusTable
 
 
 def get_class_name(class_object: type) -> str:
@@ -54,7 +56,7 @@ def get_table_modules() -> list[ModuleType]:
     """
 
     modules = [
-        DataLevelTable,
+        FileLevelTable,
         FileTypeTable,
         InstrumentTable,
         InstrumentConfigurationTable,
@@ -190,55 +192,69 @@ def get_columns(engine: Engine, table_name: str) -> list[dict[str, Any]]:
     return inspector.get_columns(table_name)  # type: ignore[return-value]
 
 
-def populate_data_level_table(
-    sql_session: sessionmaker[Session], data_levels: list[dict[str, Any]], data_level_table: Any
+def populate_file_level_table(
+    sql_session: sessionmaker[Session],
+    file_levels: list[dict[str, Any]],
+    file_level_table: Any,
 ) -> None:
     """
-    Upsert the data level table with the configured data levels.
+    Upsert the file level table with the configured file levels.
 
-    Inserts new data levels and updates metadata (``full_name``, ``description``)
-    on existing rows. Rows present in the database but absent from *data_levels*
+    Inserts new file levels and updates metadata (``full_name``, ``description``)
+    on existing rows. Rows present in the database but absent from *file_levels*
     are left in place for foreign-key integrity.
 
     Parameters
     ----------
     sql_session : sessionmaker[Session]
         SQLAlchemy session factory.
-    data_levels : list[dict[str, Any]]
-        List of data level dictionaries, each containing ``short_name``,
+    file_levels : list[dict[str, Any]]
+        List of file level dictionaries, each containing ``short_name``,
         ``full_name``, and ``description`` keys.
-    data_level_table : type
-        The ORM class for the data level table.
+    file_level_table : type
+        The ORM class for the file level table.
     """
-    log.debug("Upserting Data Level Table")
+    log.debug("Upserting File Level Table")
     with sql_session.begin() as session:
-        for data_level in data_levels:
-            existing = session.query(data_level_table).filter_by(short_name=data_level["short_name"]).first()
+        for file_level in file_levels:
+            existing = (
+                session.query(file_level_table)
+                .filter_by(short_name=file_level["short_name"])
+                .first()
+            )
             if existing is None:
-                log.debug(f"Inserting new data level '{data_level['short_name']}' into Data Level Table")
+                log.debug(
+                    f"Inserting new file level '{file_level['short_name']}' into File Level Table"
+                )
                 session.add(
-                    data_level_table(
-                        full_name=data_level["full_name"],
-                        short_name=data_level["short_name"],
-                        description=data_level["description"],
+                    file_level_table(
+                        full_name=file_level["full_name"],
+                        short_name=file_level["short_name"],
+                        description=file_level["description"],
                     )
                 )
             else:
                 updated_fields: list[str] = []
-                if existing.full_name != data_level["full_name"]:
-                    existing.full_name = data_level["full_name"]
+                if existing.full_name != file_level["full_name"]:
+                    existing.full_name = file_level["full_name"]
                     updated_fields.append("full_name")
-                if existing.description != data_level["description"]:
-                    existing.description = data_level["description"]
+                if existing.description != file_level["description"]:
+                    existing.description = file_level["description"]
                     updated_fields.append("description")
                 if updated_fields:
-                    log.debug(f"Updated data level '{data_level['short_name']}' fields: {', '.join(updated_fields)}")
+                    log.debug(
+                        f"Updated file level '{file_level['short_name']}' fields: {', '.join(updated_fields)}"
+                    )
                 else:
-                    log.debug(f"Data level '{data_level['short_name']}' is up to date, no changes needed")
+                    log.debug(
+                        f"File level '{file_level['short_name']}' is up to date, no changes needed"
+                    )
 
 
 def populate_file_type_table(
-    sql_session: sessionmaker[Session], file_types: list[dict[str, Any]], file_type_table: Any
+    sql_session: sessionmaker[Session],
+    file_types: list[dict[str, Any]],
+    file_type_table: Any,
 ) -> None:
     """
     Upsert the file type table with the configured file types.
@@ -260,9 +276,15 @@ def populate_file_type_table(
     log.debug("Upserting File Type Table")
     with sql_session.begin() as session:
         for file_type in file_types:
-            existing = session.query(file_type_table).filter_by(short_name=file_type["short_name"]).first()
+            existing = (
+                session.query(file_type_table)
+                .filter_by(short_name=file_type["short_name"])
+                .first()
+            )
             if existing is None:
-                log.debug(f"Inserting new file type '{file_type['short_name']}' into File Type Table")
+                log.debug(
+                    f"Inserting new file type '{file_type['short_name']}' into File Type Table"
+                )
                 session.add(
                     file_type_table(
                         short_name=file_type["short_name"],
@@ -283,13 +305,19 @@ def populate_file_type_table(
                     existing.extension = file_type["extension"]
                     updated_fields.append("extension")
                 if updated_fields:
-                    log.debug(f"Updated file type '{file_type['short_name']}' fields: {', '.join(updated_fields)}")
+                    log.debug(
+                        f"Updated file type '{file_type['short_name']}' fields: {', '.join(updated_fields)}"
+                    )
                 else:
-                    log.debug(f"File type '{file_type['short_name']}' is up to date, no changes needed")
+                    log.debug(
+                        f"File type '{file_type['short_name']}' is up to date, no changes needed"
+                    )
 
 
 def populate_instrument_table(
-    sql_session: sessionmaker[Session], instruments: list[dict[str, Any]], instrument_table: Any
+    sql_session: sessionmaker[Session],
+    instruments: list[dict[str, Any]],
+    instrument_table: Any,
 ) -> None:
     """
     Upsert the instrument table with the configured instruments.
@@ -311,7 +339,11 @@ def populate_instrument_table(
     log.debug("Upserting Instrument Table")
     with sql_session.begin() as session:
         for instrument in instruments:
-            existing = session.query(instrument_table).filter_by(instrument_id=instrument["instrument_id"]).first()
+            existing = (
+                session.query(instrument_table)
+                .filter_by(instrument_id=instrument["instrument_id"])
+                .first()
+            )
             if existing is None:
                 log.debug(
                     f"Inserting new instrument '{instrument['short_name']}'"
@@ -377,7 +409,9 @@ def sync_instrument_configuration_schema(engine: Engine) -> None:
     table_name = ic_table_class.__table__.name
 
     if not table_exists(engine, table_name):
-        log.debug(f"Table '{table_name}' does not exist yet; schema sync skipped (will be created by create_all)")
+        log.debug(
+            f"Table '{table_name}' does not exist yet; schema sync skipped (will be created by create_all)"
+        )
         return
 
     # Determine which columns the ORM expects vs. what the DB has
@@ -450,7 +484,9 @@ def populate_instrument_configuration_table(
         for _instrument_configuration in instrument_configurations:
             config_id = _instrument_configuration["instrument_configuration_id"]
             existing = (
-                session.query(instrument_configuration_table).filter_by(instrument_configuration_id=config_id).first()
+                session.query(instrument_configuration_table)
+                .filter_by(instrument_configuration_id=config_id)
+                .first()
             )
             if existing is None:
                 log.debug(f"Inserting new instrument configuration (id={config_id})")
@@ -465,9 +501,13 @@ def populate_instrument_configuration_table(
                         setattr(existing, key, value)
                         updated_fields.append(key)
                 if updated_fields:
-                    log.debug(f"Updated instrument configuration (id={config_id}) fields: {', '.join(updated_fields)}")
+                    log.debug(
+                        f"Updated instrument configuration (id={config_id}) fields: {', '.join(updated_fields)}"
+                    )
                 else:
-                    log.debug(f"Instrument configuration (id={config_id}) is up to date, no changes needed")
+                    log.debug(
+                        f"Instrument configuration (id={config_id}) is up to date, no changes needed"
+                    )
 
 
 def create_table(engine: Engine, table_class: Any) -> None:
@@ -514,21 +554,9 @@ def create_tables(engine: Engine) -> None:
     """
     log.debug("create_tables: starting")
 
-    # --- 1. Create all table classes and register them with metadata ---
-    from swxsoc.db.tracker.database.tables.base_table import get_or_create_base
+    # --- 1. Create all tables at once (no-op if they already exist) ---
+    from swxsoc.db.tables.base_table import Base
 
-    Base = get_or_create_base()
-    
-    # Create all table classes - this registers them with Base.metadata
-    data_level_class = DataLevelTable.return_class()
-    file_type_class = FileTypeTable.return_class()
-    instrument_class = InstrumentTable.return_class()
-    instrument_config_class = InstrumentConfigurationTable.return_class()
-    science_file_class = ScienceFileTable.return_class()
-    science_product_class = ScienceProductTable.return_class()
-    status_class = StatusTable.return_class()
-    
-    # Now create all tables (no-op if they already exist)
     Base.metadata.create_all(engine)
     log.debug("create_tables: Base.metadata.create_all complete")
 
@@ -538,34 +566,34 @@ def create_tables(engine: Engine) -> None:
     # --- 3. Upsert lookup / configuration tables ---
     session = create_session(engine)
 
-    log.debug("create_tables: upserting data level table")
-    populate_data_level_table(session, CONFIGURATION.data_levels, data_level_class)
+    file_level_class = FileLevelTable.return_class()
+    file_type_class = FileTypeTable.return_class()
+    instrument_class = InstrumentTable.return_class()
+    instrument_config_class = InstrumentConfigurationTable.return_class()
+
+    log.debug("create_tables: upserting file level table")
+    populate_file_level_table(
+        session, swxsoc.db.CONFIGURATION.file_levels, file_level_class
+    )
 
     log.debug("create_tables: upserting file type table")
-    populate_file_type_table(session, CONFIGURATION.file_types, file_type_class)
+    populate_file_type_table(
+        session, swxsoc.db.CONFIGURATION.file_types, file_type_class
+    )
 
     log.debug("create_tables: upserting instrument table")
-    populate_instrument_table(session, CONFIGURATION.instruments, instrument_class)
+    populate_instrument_table(
+        session, swxsoc.db.CONFIGURATION.instruments, instrument_class
+    )
 
     log.debug("create_tables: upserting instrument configuration table")
-    populate_instrument_configuration_table(session, CONFIGURATION.instrument_configurations, instrument_config_class)
+    populate_instrument_configuration_table(
+        session,
+        swxsoc.db.CONFIGURATION.instrument_configurations,
+        instrument_config_class,
+    )
 
     log.debug("create_tables: complete")
-
-
-def set_up_tables(engine: Engine, session: sessionmaker[Session] | None = None) -> None:
-    """Backward-compatible wrapper for legacy MetaTracker callers.
-
-    Parameters
-    ----------
-    engine : Engine
-        SQLAlchemy engine connected to the database.
-    session : sessionmaker[Session] | None
-        Deprecated and unused. Kept only for API compatibility with older
-        call sites that passed both ``engine`` and ``session``.
-    """
-    _ = session
-    create_tables(engine)
 
 
 def remove_tables(engine: Engine) -> None:

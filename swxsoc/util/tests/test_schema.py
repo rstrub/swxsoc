@@ -1,5 +1,6 @@
 import tempfile
 from collections import OrderedDict
+from pathlib import Path
 
 import astropy.units as u
 import numpy as np
@@ -13,11 +14,11 @@ from numpy.random import random
 from swxsoc.swxdata import SWXData
 from swxsoc.util import const
 from swxsoc.util.schema import SWXSchema
-from pathlib import Path
 
 # Skip all tests in this module if spacepy is not available
 spacepy = pytest.importorskip("spacepy.pycdf")
 from spacepy.pycdf import CDF  # noqa: E402
+
 
 def get_test_sw_data():
     ts = TimeSeries()
@@ -97,9 +98,9 @@ def test_sw_data_schema():
 
 def test_load_yaml_data():
     """Test Loading Yaml Data for Schema Files"""
-    
+
     pytest.importorskip("sammi.cdf_attribute_manager")
-    
+
     with tempfile.TemporaryDirectory() as tmpdirname:
         # This function writes invalid YAML content into a file
         invalid_yaml = """

@@ -1,11 +1,8 @@
-from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
-
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import declarative_base
 
-from swxsoc.db.tracker import get_config
-from swxsoc.db.tracker.database import create_engine, create_session
-from swxsoc.db.tracker.database.tables import (
+from swxsoc.db import CONFIGURATION, create_engine, create_session
+from swxsoc.db.tables import (
     create_table,
     create_tables,
     get_columns,
@@ -13,14 +10,16 @@ from swxsoc.db.tracker.database.tables import (
     remove_tables,
     table_exists,
 )
+from swxsoc.db.tests import _optional_dependencies  # noqa: F401
 
 
 def test_get_tables() -> None:
     # Create engine and session
     engine = create_engine("sqlite://")
-    
+
     # Get mission name at runtime
-    MISSION_NAME = get_config().mission_name
+    MISSION_NAME = CONFIGURATION.mission_name
+    assert isinstance(MISSION_NAME, str)
 
     # Create Base
     Base = declarative_base()
@@ -106,8 +105,8 @@ def test_table_exists() -> None:
 
 def test_create_tables() -> None:
     # Get mission name at runtime
-    MISSION_NAME = get_config().mission_name
-    
+    MISSION_NAME = CONFIGURATION.mission_name
+
     # Create engine and session
     engine = create_engine("sqlite://")
     create_session(engine)
@@ -117,7 +116,7 @@ def test_create_tables() -> None:
 
     # Expected tables
     table_names = [
-        f"{MISSION_NAME}_data_level",
+        f"{MISSION_NAME}_file_level",
         f"{MISSION_NAME}_instrument_configuration",
         f"{MISSION_NAME}_instrument",
         f"{MISSION_NAME}_file_type",
@@ -140,8 +139,8 @@ def test_create_tables() -> None:
 
 def test_create_tables_existing() -> None:
     # Get mission name at runtime
-    MISSION_NAME = get_config().mission_name
-    
+    MISSION_NAME = CONFIGURATION.mission_name
+
     # Create engine and session
     engine = create_engine("sqlite://")
     create_session(engine)
@@ -151,7 +150,7 @@ def test_create_tables_existing() -> None:
 
     # Expected tables
     table_names = [
-        f"{MISSION_NAME}_data_level",
+        f"{MISSION_NAME}_file_level",
         f"{MISSION_NAME}_instrument_configuration",
         f"{MISSION_NAME}_instrument",
         f"{MISSION_NAME}_file_type",
@@ -177,8 +176,8 @@ def test_create_tables_existing() -> None:
 
 def test_remove_tables() -> None:
     # Get mission name at runtime
-    MISSION_NAME = get_config().mission_name
-    
+    MISSION_NAME = CONFIGURATION.mission_name
+
     # Create engine and session
     engine = create_engine("sqlite://")
 
@@ -187,7 +186,7 @@ def test_remove_tables() -> None:
 
     # Expected tables
     table_names = [
-        f"{MISSION_NAME}_data_level",
+        f"{MISSION_NAME}_file_level",
         f"{MISSION_NAME}_instrument_configuration",
         f"{MISSION_NAME}_instrument",
         f"{MISSION_NAME}_file_type",
@@ -211,4 +210,4 @@ def test_remove_tables() -> None:
     remove_tables(engine=engine)
 
     # Get tables
-    assert not table_exists(engine=engine, table_name=f"{MISSION_NAME}_data_level")
+    assert not table_exists(engine=engine, table_name=f"{MISSION_NAME}_file_level")

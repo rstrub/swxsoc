@@ -5,19 +5,31 @@ from typing import Any, Callable, Optional
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from swxsoc.db.tracker import log
-from swxsoc.db.tracker.database import check_connection, create_session
-from swxsoc.db.tracker.database.tables import data_level_table, file_type_table, instrument_table
-from swxsoc.db.tracker.database.tables import instrument_configuration_table
-from swxsoc.db.tracker.database.tables import science_file_table, science_product_table, status_table
+from swxsoc import log
+from swxsoc.db import check_connection, create_session
+from swxsoc.db.tables.file_level_table import FileLevelTable
+from swxsoc.db.tables.file_type_table import FileTypeTable
+from swxsoc.db.tables.instrument_configuration_table import InstrumentConfigurationTable
+from swxsoc.db.tables.instrument_table import InstrumentTable
+from swxsoc.db.tables.science_file_table import ScienceFileTable
+from swxsoc.db.tables.science_product_table import ScienceProductTable
+from swxsoc.db.tables.status_table import StatusTable
 
 db_retry = retry(
     reraise=True,
     stop=stop_after_attempt(5),  # Try up to 5 times
     wait=wait_exponential(multiplier=1, min=2, max=10),  # 2s, 4s, 8s, 10s, 10s
-    retry=(retry_if_exception_type(OperationalError) | retry_if_exception_type(IntegrityError)),
+    retry=(
+        retry_if_exception_type(OperationalError)
+        | retry_if_exception_type(IntegrityError)
+    ),
 )
 
 
@@ -29,7 +41,9 @@ class MetaTracker:
     operations are wrapped with retry logic via the ``@db_retry`` decorator.
     """
 
-    def __init__(self, engine: Engine, science_file_parser: Callable[[Path], dict[str, Any]]) -> None:
+    def __init__(
+        self, engine: Engine, science_file_parser: Callable[[Path], dict[str, Any]]
+    ) -> None:
         """
         Initialize the MetaTracker instance.
 
@@ -115,7 +129,9 @@ class MetaTracker:
         # Add to science file table
         log.debug("Added to Science Product Table")
         science_file_id = self.add_to_science_file_table(
-            session=session, parsed_file=parsed_file, science_product_id=science_product_id
+            session=session,
+            parsed_file=parsed_file,
+            science_product_id=science_product_id,
         )
         log.debug("Added to Science File Table")
 
@@ -135,7 +151,10 @@ class MetaTracker:
 
     @db_retry
     def add_to_science_file_table(
-        self, session: sessionmaker[Session], parsed_file: dict[str, Any], science_product_id: int
+        self,
+        session: sessionmaker[Session],
+        parsed_file: dict[str, Any],
+        science_product_id: int,
     ) -> int:
         """Add a science file record to the science file table, or return the existing ID.
 
@@ -161,8 +180,6 @@ class MetaTracker:
             The ``science_file_id`` of the inserted or existing record,
             or ``0`` if ``parsed_file`` is empty.
         """
-        # Get table class at runtime
-        ScienceFileTable = science_file_table.return_class()
 
         with session.begin() as sql_session:
             if not parsed_file:
@@ -171,19 +188,23 @@ class MetaTracker:
 
             # 1. Check for existing file by UNIQUE constraint (filename)
             file = (
-                sql_session.query(ScienceFileTable).filter(ScienceFileTable.filename == parsed_file["filename"]).first()
+                sql_session.query(ScienceFileTable)
+                .filter(ScienceFileTable.filename == parsed_file["filename"])
+                .first()
             )
 
             if file:
                 # Optionally update fields if needed (for now just return the id)
-                log.debug(f"File already exists in Science File Table with id: {file.science_file_id}")
+                log.debug(
+                    f"File already exists in Science File Table with id: {file.science_file_id}"
+                )
                 return file.science_file_id  # type: ignore[return-value]
 
             # 2. If not found, insert new
             file = ScienceFileTable(
                 science_product_id=science_product_id,
                 file_type=parsed_file["file_type"],
-                data_level=parsed_file["file_level"],
+                file_level=parsed_file["file_level"],
                 filename=parsed_file["filename"],
                 file_version=parsed_file["file_version"],
                 file_size=parsed_file["file_size"],
@@ -224,8 +245,6 @@ class MetaTracker:
         int
             The ``science_product_id`` of the inserted or existing record.
         """
-        # Get table class at runtime
-        ScienceProductTable = science_product_table.return_class()
 
         with session.begin() as sql_session:
             # Check if science product exists with same instrument configuration id, mode, and reference timestamp
@@ -235,7 +254,8 @@ class MetaTracker:
                     ScienceProductTable.instrument_configuration_id
                     == parsed_science_product["instrument_configuration_id"],
                     ScienceProductTable.mode == parsed_science_product["mode"],
-                    ScienceProductTable.reference_timestamp == parsed_science_product["reference_timestamp"],
+                    ScienceProductTable.reference_timestamp
+                    == parsed_science_product["reference_timestamp"],
                 )
                 .first()
             )
@@ -246,7 +266,9 @@ class MetaTracker:
 
             # If science product doesn't exist, add it to the database
             science_product = ScienceProductTable(
-                instrument_configuration_id=parsed_science_product["instrument_configuration_id"],
+                instrument_configuration_id=parsed_science_product[
+                    "instrument_configuration_id"
+                ],
                 mode=parsed_science_product["mode"],
                 reference_timestamp=parsed_science_product["reference_timestamp"],
             )
@@ -298,16 +320,17 @@ class MetaTracker:
         ValueError
             If ``origin_file_ids`` is not a list of integers.
         """
-        # Get table classes at runtime
-        ScienceFileTable = science_file_table.return_class()
-        StatusTable = status_table.return_class()
 
         with session.begin() as sql_session:
             # Validate and fetch origin files if provided
             origin_files = []
             if origin_file_ids is not None:
-                if not isinstance(origin_file_ids, list) or not all(isinstance(i, int) for i in origin_file_ids):
-                    raise ValueError("origin_file_ids must be a list of integers or None")
+                if not isinstance(origin_file_ids, list) or not all(
+                    isinstance(i, int) for i in origin_file_ids
+                ):
+                    raise ValueError(
+                        "origin_file_ids must be a list of integers or None"
+                    )
                 origin_files = (
                     sql_session.query(ScienceFileTable)
                     .filter(ScienceFileTable.science_file_id.in_(origin_file_ids))
@@ -315,7 +338,11 @@ class MetaTracker:
                 )
 
             # Check if status already exists
-            status = sql_session.query(StatusTable).filter(StatusTable.science_file_id == science_file_id).first()
+            status = (
+                sql_session.query(StatusTable)
+                .filter(StatusTable.science_file_id == science_file_id)
+                .first()
+            )
 
             if status:
                 # Update fields
@@ -328,7 +355,9 @@ class MetaTracker:
                 # Extend existing origin_files without duplicates
                 if origin_files:
                     existing_ids = {f.science_file_id for f in status.origin_files}
-                    new_files = [f for f in origin_files if f.science_file_id not in existing_ids]
+                    new_files = [
+                        f for f in origin_files if f.science_file_id not in existing_ids
+                    ]
                     status.origin_files.extend(new_files)
 
             else:
@@ -411,7 +440,9 @@ class MetaTracker:
         """
         return self.science_file_parser(file)
 
-    def parse_file(self, session: sessionmaker[Session], file: Path, s3_key: str, s3_bucket: str) -> dict[str, Any]:
+    def parse_file(
+        self, session: sessionmaker[Session], file: Path, s3_key: str, s3_bucket: str
+    ) -> dict[str, Any]:
         """Parse a file and build a metadata dictionary for the science file table.
 
         Validates the file extension and level against the database before constructing
@@ -438,13 +469,16 @@ class MetaTracker:
         if self.is_file_real(file):
             extension = self.parse_extension(file)
             if not self.is_valid_file_type(session=session, extension=extension):
-                log.debug("File type is not valid")
+                log.warning(f"File type is not valid: {extension}")
                 return {}
 
+            # Parse Metadata from Filename (calls the user-provided parser)
             science_file_data = self.parse_science_file_data(file)
 
-            if not self.is_valid_file_level(session=session, file_level=science_file_data["level"]):
-                log.debug("File level is not valid")
+            if not self.is_valid_file_level(
+                session=session, file_level=science_file_data["level"]
+            ):
+                log.warning(f"File level is not valid: {science_file_data['level']}")
                 return {}
 
             return {
@@ -463,7 +497,9 @@ class MetaTracker:
 
         return {}
 
-    def parse_science_product(self, session: sessionmaker[Session], file: Path) -> dict[str, Any]:
+    def parse_science_product(
+        self, session: sessionmaker[Session], file: Path
+    ) -> dict[str, Any]:
         """Parse a science file and build a metadata dictionary for the science product table.
 
         Extracts the instrument configuration, reference timestamp, and mode from the
@@ -496,9 +532,14 @@ class MetaTracker:
             if isinstance(science_product_data["time"].value, datetime):
                 reference_timestamp = science_product_data["time"].value
             else:
-                reference_timestamp = datetime.strptime(science_product_data["time"].value, "%Y-%m-%dT%H:%M:%S.%f")
+                reference_timestamp = datetime.strptime(
+                    science_product_data["time"].value, "%Y-%m-%dT%H:%M:%S.%f"
+                )
 
-            if not self.is_valid_instrument(session=session, instrument_short_name=science_product_data["instrument"]):
+            if not self.is_valid_instrument(
+                session=session,
+                instrument_short_name=science_product_data["instrument"],
+            ):
                 log.debug("Instrument is not valid")
                 return {}
 
@@ -509,9 +550,13 @@ class MetaTracker:
                 return {}
 
             # return Key with matching list values
-            instrument_config_id = [k for k, v in config.items() if science_product_data["instrument"] in v][0]
+            instrument_config_id = [
+                k for k, v in config.items() if science_product_data["instrument"] in v
+            ][0]
             if not instrument_config_id:
-                raise ValueError(f"Instrument configuration id not found {science_product_data}")
+                raise ValueError(
+                    f"Instrument configuration id not found {science_product_data}"
+                )
 
             return {
                 "instrument_configuration_id": instrument_config_id,
@@ -539,7 +584,9 @@ class MetaTracker:
         return timestamp is not None
 
     @staticmethod
-    def is_valid_instrument(session: sessionmaker[Session], instrument_short_name: str) -> bool:
+    def is_valid_instrument(
+        session: sessionmaker[Session], instrument_short_name: str
+    ) -> bool:
         """Check if an instrument short name exists in the instrument table.
 
         Parameters
@@ -554,10 +601,11 @@ class MetaTracker:
         bool
             ``True`` if the instrument short name is found in the database.
         """
-        InstrumentTable = instrument_table.return_class()
         with session.begin() as sql_session:
             instruments = sql_session.query(InstrumentTable).all()
-            valid_instrument_short_names = [instrument.short_name for instrument in instruments]
+            valid_instrument_short_names = [
+                instrument.short_name for instrument in instruments
+            ]
 
             return instrument_short_name in valid_instrument_short_names
 
@@ -577,9 +625,12 @@ class MetaTracker:
         str
             Short name of the matching file type.
         """
-        FileTypeTable = file_type_table.return_class()
         with session.begin() as sql_session:
-            file_type = sql_session.query(FileTypeTable).filter(FileTypeTable.extension == extension).first()
+            file_type = (
+                sql_session.query(FileTypeTable)
+                .filter(FileTypeTable.extension == extension)
+                .first()
+            )
 
             return file_type.short_name  # type: ignore[union-attr, return-value]
 
@@ -599,7 +650,6 @@ class MetaTracker:
         bool
             ``True`` if the extension matches a known file type.
         """
-        FileTypeTable = file_type_table.return_class()
         with session.begin() as sql_session:
             file_types = sql_session.query(FileTypeTable).all()
             valid_extensions = [file_type.extension for file_type in file_types]
@@ -622,12 +672,11 @@ class MetaTracker:
         bool
             ``True`` if the file level is found in the database.
         """
-        DataLevelTable = data_level_table.return_class()
         with session.begin() as sql_session:
-            data_levels = sql_session.query(DataLevelTable).all()
-            valid_data_levels = [data_level.short_name for data_level in data_levels]
+            file_levels = sql_session.query(FileLevelTable).all()
+            valid_file_levels = [file_level.short_name for file_level in file_levels]
 
-            return file_level in valid_data_levels
+            return file_level in valid_file_levels
 
     @staticmethod
     def parse_extension(file: Path) -> str:
@@ -692,16 +741,18 @@ class MetaTracker:
             Mapping of instrument IDs to their short names.
             Example: ``{1: "meddea", 2: "sharp"}``.
         """
-        InstrumentTable = instrument_table.return_class()
         with session.begin() as sql_session:
             instruments = sql_session.query(InstrumentTable).all()
             result: dict[int, str] = {
-                instrument.instrument_id: instrument.short_name for instrument in instruments  # type: ignore[misc]
+                instrument.instrument_id: instrument.short_name
+                for instrument in instruments  # type: ignore[misc]
             }
 
             return result
 
-    def get_instrument_configurations(self, session: sessionmaker[Session]) -> dict[int, list[str]]:
+    def get_instrument_configurations(
+        self, session: sessionmaker[Session]
+    ) -> dict[int, list[str]]:
         """Get all instrument configurations from the database.
 
         Each configuration maps to a sorted list of instrument short names that
@@ -718,12 +769,13 @@ class MetaTracker:
             Mapping of configuration IDs to sorted lists of instrument short names.
             Example: ``{1: ["meddea"], 2: ["sharp"]}``.
         """
-        InstrumentConfigurationTable = instrument_configuration_table.return_class()
         with session.begin() as sql_session:
             # Get amount of instruments from InstrumentTable
             instruments = self.get_instruments(session)
             amount_of_instruments = len(instruments)
-            configurations: list[Any] = sql_session.query(InstrumentConfigurationTable).all()
+            configurations: list[Any] = sql_session.query(
+                InstrumentConfigurationTable
+            ).all()
 
             instrument_configurations: dict[int, list[str]] = {}
             for config in configurations:
@@ -736,11 +788,15 @@ class MetaTracker:
                         instrument_names.append(attribute)
 
                 instrument_names.sort()
-                instrument_configurations[config.instrument_configuration_id] = instrument_names
+                instrument_configurations[config.instrument_configuration_id] = (
+                    instrument_names
+                )
 
             return instrument_configurations
 
-    def get_instrument_by_id(self, session: sessionmaker[Session], instrument_id: int) -> str:
+    def get_instrument_by_id(
+        self, session: sessionmaker[Session], instrument_id: int
+    ) -> str:
         """Get the short name of an instrument by its ID.
 
         Parameters
@@ -764,7 +820,9 @@ class MetaTracker:
             instruments = self.get_instruments(session)
             return instruments[instrument_id]
 
-    def map_instrument_list(self, session: sessionmaker[Session], instrument_list: list[int]) -> list[str]:
+    def map_instrument_list(
+        self, session: sessionmaker[Session], instrument_list: list[int]
+    ) -> list[str]:
         """Map a list of instrument IDs to their corresponding short names.
 
         Parameters
@@ -780,4 +838,7 @@ class MetaTracker:
             List of instrument short names in the same order as the input.
         """
         with session.begin():
-            return [self.get_instrument_by_id(session, instrument_id) for instrument_id in instrument_list]
+            return [
+                self.get_instrument_by_id(session, instrument_id)
+                for instrument_id in instrument_list
+            ]

@@ -1,6 +1,5 @@
-from swxsoc.db.tracker.tests import _optional_dependencies  # noqa: F401
-
-from swxsoc.db.tracker.database import check_connection, create_engine, create_session
+from swxsoc.db import check_connection, create_engine, create_session
+from swxsoc.db.tests import _optional_dependencies  # noqa: F401
 
 
 # Test create database engine

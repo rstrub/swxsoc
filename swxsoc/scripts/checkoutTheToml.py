@@ -1,5 +1,4 @@
 from pathlib import Path
-import sys
 
 try:
     import tomllib
@@ -27,7 +26,7 @@ def main():
     print("=" * 60)
     print(list(data["project"]["optional-dependencies"].keys()))
     print()
-    
+
     for name, deps in data["project"]["optional-dependencies"].items():
         print(f"{name}:")
         for dep in deps:
@@ -37,20 +36,28 @@ def main():
     # Check if current env is missing any base dependencies
     try:
         import importlib.metadata
+
         print("=" * 60)
         print("CHECKING CURRENT ENVIRONMENT:")
         print("=" * 60)
-        
+
         installed = {pkg.name.lower() for pkg in importlib.metadata.distributions()}
-        
+
         # Extract package names from dependencies (strip version specs)
         base_pkgs = []
         for dep in data["project"]["dependencies"]:
-            pkg_name = dep.split("[")[0].split(">")[0].split("<")[0].split("=")[0].split("!")[0].strip()
+            pkg_name = (
+                dep.split("[")[0]
+                .split(">")[0]
+                .split("<")[0]
+                .split("=")[0]
+                .split("!")[0]
+                .strip()
+            )
             base_pkgs.append(pkg_name)
-        
+
         missing = [pkg for pkg in base_pkgs if pkg.lower() not in installed]
-        
+
         if missing:
             print("⚠️  MISSING base dependencies in current environment:")
             for pkg in missing:
@@ -58,11 +65,10 @@ def main():
             print("\n   Run: pip install -e .")
         else:
             print("✅ All base dependencies installed")
-            
+
     except ImportError:
         print("(skipping env check - importlib.metadata not available)")
 
 
 if __name__ == "__main__":
     main()
-
