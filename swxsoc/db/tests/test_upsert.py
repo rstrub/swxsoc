@@ -10,6 +10,9 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy.engine import Engine
 
 import swxsoc
@@ -32,7 +35,6 @@ from swxsoc.db.tables import (
     science_product_table,
     sync_instrument_configuration_schema,
 )
-from swxsoc.db.tests import _optional_dependencies  # noqa: F401
 
 MISSION_NAME = swxsoc.config["mission"]["mission_name"]
 

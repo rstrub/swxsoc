@@ -3,6 +3,9 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("sqlalchemy")
+pytest.importorskip("tenacity")
+
 import swxsoc
 from swxsoc.db import _test_files_directory, create_engine, create_session
 from swxsoc.db.tables import (

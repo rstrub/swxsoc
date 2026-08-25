@@ -2,6 +2,13 @@
 Setup Tables
 """
 
+# The dependency check intentionally precedes the SQLAlchemy imports below so
+# direct imports fail with an actionable message in core-only installations.
+# ruff: noqa: E402
+from swxsoc.db._optional import require_tracker_dependencies
+
+require_tracker_dependencies()
+
 import re
 from types import ModuleType
 from typing import Any

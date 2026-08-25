@@ -2,13 +2,24 @@
 Module to handle database operations
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from sqlalchemy import create_engine as sqlalchemy_create_engine
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker
+from swxsoc.db._optional import HAS_SQLALCHEMY, require_tracker_dependencies
 
-__all__ = ["check_connection", "create_engine", "create_session", "reconfigure"]
+if TYPE_CHECKING:
+    from sqlalchemy.engine import Engine
+    from sqlalchemy.orm import Session, sessionmaker
+
+__all__ = [
+    "HAS_SQLALCHEMY",
+    "check_connection",
+    "create_engine",
+    "create_session",
+    "reconfigure",
+]
 
 _package_directory = Path(__file__).parent
 _test_files_directory = _package_directory / "tests" / "test_files"
@@ -25,6 +36,7 @@ def check_connection(engine: Engine) -> bool:
     :rtype: bool
     """
 
+    require_tracker_dependencies()
     with engine.connect():
         return True
 
@@ -38,6 +50,9 @@ def create_engine(db_host: str) -> Engine:
     :return: SQLAlchemy Engine
     :rtype: Engine
     """
+
+    require_tracker_dependencies()
+    from sqlalchemy import create_engine as sqlalchemy_create_engine
 
     engine = sqlalchemy_create_engine(db_host)
     return engine
@@ -53,6 +68,9 @@ def create_session(engine: Engine) -> sessionmaker[Session]:
     :return: SQLAlchemy Session
     :rtype: sessionmaker[Session]
     """
+
+    require_tracker_dependencies()
+    from sqlalchemy.orm import sessionmaker
 
     session = sessionmaker(bind=engine)
     return session
@@ -71,6 +89,7 @@ def reconfigure() -> None:
     The import is deferred to avoid a circular import, since
     ``swxsoc.db.tables`` imports from ``swxsoc.db`` at module load time.
     """
+    require_tracker_dependencies()
     from swxsoc.db.tables import reconfigure as _reconfigure_tables
 
     _reconfigure_tables()

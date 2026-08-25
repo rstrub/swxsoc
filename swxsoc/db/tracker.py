@@ -2,6 +2,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+# The dependency check intentionally precedes these imports so direct imports
+# fail with an actionable message in core-only installations.
+# ruff: noqa: E402
+from swxsoc.db._optional import require_tracker_dependencies
+
+require_tracker_dependencies(tenacity=True)
+
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker

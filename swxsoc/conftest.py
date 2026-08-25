@@ -9,13 +9,9 @@ import os
 import pytest
 
 import swxsoc
+import swxsoc.db
 
-try:
-    import swxsoc.db
-
-    HAS_DB = True
-except ImportError:
-    HAS_DB = False
+HAS_DB = swxsoc.db.HAS_SQLALCHEMY
 
 
 @pytest.fixture(autouse=True, scope="function")

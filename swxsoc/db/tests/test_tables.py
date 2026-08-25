@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import declarative_base
 
@@ -11,7 +15,6 @@ from swxsoc.db.tables import (
     remove_tables,
     table_exists,
 )
-from swxsoc.db.tests import _optional_dependencies  # noqa: F401
 
 
 def test_get_tables() -> None:

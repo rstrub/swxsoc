@@ -1,5 +1,8 @@
+import pytest
+
+pytest.importorskip("sqlalchemy")
+
 from swxsoc.db import check_connection, create_engine, create_session
-from swxsoc.db.tests import _optional_dependencies  # noqa: F401
 
 
 # Test create database engine
