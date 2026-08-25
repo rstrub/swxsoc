@@ -8,53 +8,75 @@
 from datetime import datetime
 from typing import Any
 
-from metatracker import CONFIGURATION
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
+import swxsoc
+
 from . import base_table as Base
 
+_current_class: Any = None
 
-class ScienceProductTable(Base.Base):  # type: ignore
-    __tablename__ = f"{CONFIGURATION.mission_name}_science_product"
 
-    # ID Of Science Product (Primary Key)
-    science_product_id = Column(Integer, primary_key=True, autoincrement=True)
+def _build_class() -> Any:
+    mission_name = swxsoc.config["mission"]["mission_name"]
 
-    # ID Of Instrument Configuration (Foreign Key)
-    instrument_configuration_id = Column(
-        Integer,
-        ForeignKey(
-            f"{CONFIGURATION.mission_name}_instrument_configuration.instrument_configuration_id"
-        ),
-    )
+    class ScienceProductTable(Base.Base):  # type: ignore
+        __tablename__ = f"{mission_name}_science_product"
 
-    # Mode Of Science Product
-    mode = Column(String)
+        # ID Of Science Product (Primary Key)
+        science_product_id = Column(Integer, primary_key=True, autoincrement=True)
 
-    # Reference Timestamp Of Science Product
-    reference_timestamp = Column(DateTime)
+        # ID Of Instrument Configuration (Foreign Key)
+        instrument_configuration_id = Column(
+            Integer,
+            ForeignKey(
+                f"{mission_name}_instrument_configuration.instrument_configuration_id"
+            ),
+        )
 
-    children = relationship(
-        "ScienceFileTable", back_populates="parent", cascade="all, delete"
-    )
+        # Mode Of Science Product
+        mode = Column(String)
 
-    def __init__(
-        self, instrument_configuration_id: int, mode: str, reference_timestamp: datetime
-    ) -> None:
-        """
-        Constructor for Science Product Table
-        """
-        self.instrument_configuration_id = instrument_configuration_id  # type: ignore[assignment]
-        self.mode = mode  # type: ignore[assignment]
-        self.reference_timestamp = reference_timestamp  # type: ignore[assignment]
+        # Reference Timestamp Of Science Product
+        reference_timestamp = Column(DateTime)
 
-    def __repr__(self) -> str:
-        return super().__repr__()  # type: ignore[no-any-return]
+        children = relationship(
+            "ScienceFileTable", back_populates="parent", cascade="all, delete"
+        )
+
+        def __init__(
+            self,
+            instrument_configuration_id: int,
+            mode: str,
+            reference_timestamp: datetime,
+        ) -> None:
+            """
+            Constructor for Science Product Table
+            """
+            self.instrument_configuration_id = instrument_configuration_id  # type: ignore[assignment]
+            self.mode = mode  # type: ignore[assignment]
+            self.reference_timestamp = reference_timestamp  # type: ignore[assignment]
+
+        def __repr__(self) -> str:
+            return super().__repr__()  # type: ignore[no-any-return]
+
+    return ScienceProductTable
+
+
+def reconfigure() -> Any:
+    """
+    Rebuild the ORM class for the currently active mission.
+    """
+    global _current_class
+    _current_class = _build_class()
+    return _current_class
 
 
 def return_class() -> Any:
     """
     Return Class
     """
-    return ScienceProductTable
+    if _current_class is None:
+        reconfigure()
+    return _current_class

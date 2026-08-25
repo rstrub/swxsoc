@@ -8,32 +8,10 @@ from sqlalchemy import create_engine as sqlalchemy_create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from swxsoc.db.config import load_config
+__all__ = ["check_connection", "create_engine", "create_session", "reconfigure"]
 
 _package_directory = Path(__file__).parent
 _test_files_directory = _package_directory / "tests" / "test_files"
-
-CONFIGURATION = load_config()
-
-
-def reconfigure():
-    """
-    Reconfigure the module by reloading the configuration.
-
-    This function reloads the configuration from the config.yml file
-    and updates the global `CONFIGURATION` variable. It also reloads dependent
-    configurations (e.g., tracker) if their modules have been imported.
-    This is useful for testing purposes when changes to the configuration
-    file need to be applied without restarting the Python session.
-
-    Example:
-        from swxsoc.db import reconfigure
-
-        # Reconfigure the module to reload the configuration
-        reconfigure()
-    """
-    global CONFIGURATION
-    CONFIGURATION = load_config()
 
 
 # Function to check if you can connect to the database with SQLAlchemy
@@ -78,3 +56,21 @@ def create_session(engine: Engine) -> sessionmaker[Session]:
 
     session = sessionmaker(bind=engine)
     return session
+
+
+def reconfigure() -> None:
+    """
+    Rebuild all ORM table classes to match the currently active mission.
+
+    Thin wrapper around ``swxsoc.db.tables.reconfigure()``. Must be called
+    any time ``swxsoc.reconfigure()`` changes the active mission, so that
+    mission-dependent table schemas -- table names, foreign key targets, and
+    the dynamic ``instrument_N_id`` columns -- are rebuilt to match instead
+    of retaining stale classes from the previous mission.
+
+    The import is deferred to avoid a circular import, since
+    ``swxsoc.db.tables`` imports from ``swxsoc.db`` at module load time.
+    """
+    from swxsoc.db.tables import reconfigure as _reconfigure_tables
+
+    _reconfigure_tables()

@@ -8,39 +8,55 @@ from typing import Any
 
 from sqlalchemy import Column, String
 
-from swxsoc.db import CONFIGURATION
+import swxsoc
 
 from . import base_table as Base
 
+_current_class: Any = None
 
-class FileLevelTable(Base.Base):  # type: ignore
-    # Name Of Table
-    __tablename__ = f"{CONFIGURATION.mission_name}_file_level"
 
-    # Short Name Of File Level
-    short_name = Column(String, primary_key=True)
+def _build_class() -> Any:
+    class FileLevelTable(Base.Base):  # type: ignore
+        # Name Of Table
+        __tablename__ = f"{swxsoc.config['mission']['mission_name']}_file_level"
 
-    # Full Name Of File Level
-    full_name = Column(String)
+        # Short Name Of File Level
+        short_name = Column(String, primary_key=True)
 
-    # Description Of File Level
-    description = Column(String)
+        # Full Name Of File Level
+        full_name = Column(String)
 
-    def __init__(self, full_name: str, short_name: str, description: str) -> None:
-        """
-        Constructor for File Level Table
-        """
+        # Description Of File Level
+        description = Column(String)
 
-        self.full_name = full_name  # type: ignore[assignment]
-        self.short_name = short_name  # type: ignore[assignment]
-        self.description = description  # type: ignore[assignment]
+        def __init__(self, full_name: str, short_name: str, description: str) -> None:
+            """
+            Constructor for File Level Table
+            """
 
-    def __repr__(self) -> str:
-        return super().__repr__()  # type: ignore[no-any-return]
+            self.full_name = full_name  # type: ignore[assignment]
+            self.short_name = short_name  # type: ignore[assignment]
+            self.description = description  # type: ignore[assignment]
+
+        def __repr__(self) -> str:
+            return super().__repr__()  # type: ignore[no-any-return]
+
+    return FileLevelTable
+
+
+def reconfigure() -> Any:
+    """
+    Rebuild the ORM class for the currently active mission.
+    """
+    global _current_class
+    _current_class = _build_class()
+    return _current_class
 
 
 def return_class() -> Any:
     """
     Return Class
     """
-    return FileLevelTable
+    if _current_class is None:
+        reconfigure()
+    return _current_class

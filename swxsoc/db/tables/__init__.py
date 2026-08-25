@@ -14,6 +14,11 @@ from sqlalchemy.sql.schema import Table
 import swxsoc.db
 from swxsoc import log
 from swxsoc.db import create_session
+from swxsoc.db.config import (
+    compute_instrument_configurations,
+    compute_instrument_metadata,
+)
+from swxsoc.db.tables import base_table
 from swxsoc.db.tables import file_level_table as FileLevelTable
 from swxsoc.db.tables import file_type_table as FileTypeTable
 from swxsoc.db.tables import (
@@ -23,6 +28,45 @@ from swxsoc.db.tables import instrument_table as InstrumentTable
 from swxsoc.db.tables import science_file_table as ScienceFileTable
 from swxsoc.db.tables import science_product_table as ScienceProductTable
 from swxsoc.db.tables import status_table as StatusTable
+
+__all__ = [
+    "reconfigure",
+    "get_class_name",
+    "get_table_modules",
+    "get_table_classes",
+    "get_table_from_class",
+    "get_tables_from_classes",
+    "get_tables",
+    "table_exists",
+    "get_columns",
+    "populate_file_level_table",
+]
+
+
+def reconfigure() -> None:
+    """
+    Rebuild all ORM table classes to match the currently active mission.
+
+    Must be called (directly, or via ``swxsoc.db.reconfigure()``) any time
+    ``swxsoc.reconfigure()`` changes the active mission, so that
+    mission-dependent schemas -- table names, foreign key targets, and the
+    dynamic ``instrument_N_id`` columns -- are rebuilt instead of retaining
+    stale classes mapped under a previous mission's declarative base.
+
+    ``base_table.reconfigure()`` replaces the shared declarative base with a
+    fresh one first, so that classes rebuilt below never collide with (or
+    get confused for) same-named classes from a previous mission still
+    registered under the old base's registry.
+    """
+    base_table.reconfigure()
+
+    FileLevelTable.reconfigure()
+    FileTypeTable.reconfigure()
+    InstrumentTable.reconfigure()
+    InstrumentConfigurationTable.reconfigure()
+    ScienceProductTable.reconfigure()
+    ScienceFileTable.reconfigure()
+    StatusTable.reconfigure()
 
 
 def get_class_name(class_object: type) -> str:
@@ -573,23 +617,19 @@ def create_tables(engine: Engine) -> None:
 
     log.debug("create_tables: upserting file level table")
     populate_file_level_table(
-        session, swxsoc.db.CONFIGURATION.file_levels, file_level_class
+        session, swxsoc.config["mission"]["data_levels"], file_level_class
     )
 
     log.debug("create_tables: upserting file type table")
-    populate_file_type_table(
-        session, swxsoc.db.CONFIGURATION.file_types, file_type_class
-    )
+    populate_file_type_table(session, swxsoc.config["file_types"], file_type_class)
 
     log.debug("create_tables: upserting instrument table")
-    populate_instrument_table(
-        session, swxsoc.db.CONFIGURATION.instruments, instrument_class
-    )
+    populate_instrument_table(session, compute_instrument_metadata(), instrument_class)
 
     log.debug("create_tables: upserting instrument configuration table")
     populate_instrument_configuration_table(
         session,
-        swxsoc.db.CONFIGURATION.instrument_configurations,
+        compute_instrument_configurations(),
         instrument_config_class,
     )
 

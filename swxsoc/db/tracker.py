@@ -14,13 +14,17 @@ from tenacity import (
 
 from swxsoc import log
 from swxsoc.db import check_connection, create_session
-from swxsoc.db.tables.file_level_table import FileLevelTable
-from swxsoc.db.tables.file_type_table import FileTypeTable
-from swxsoc.db.tables.instrument_configuration_table import InstrumentConfigurationTable
-from swxsoc.db.tables.instrument_table import InstrumentTable
-from swxsoc.db.tables.science_file_table import ScienceFileTable
-from swxsoc.db.tables.science_product_table import ScienceProductTable
-from swxsoc.db.tables.status_table import StatusTable
+from swxsoc.db.tables import (
+    file_level_table,
+    file_type_table,
+    instrument_configuration_table,
+    instrument_table,
+    science_file_table,
+    science_product_table,
+    status_table,
+)
+
+__all__ = ["MetaTracker"]
 
 db_retry = retry(
     reraise=True,
@@ -181,6 +185,8 @@ class MetaTracker:
             or ``0`` if ``parsed_file`` is empty.
         """
 
+        ScienceFileTable = science_file_table.return_class()
+
         with session.begin() as sql_session:
             if not parsed_file:
                 log.debug("File is not valid")
@@ -245,6 +251,8 @@ class MetaTracker:
         int
             The ``science_product_id`` of the inserted or existing record.
         """
+
+        ScienceProductTable = science_product_table.return_class()
 
         with session.begin() as sql_session:
             # Check if science product exists with same instrument configuration id, mode, and reference timestamp
@@ -320,6 +328,9 @@ class MetaTracker:
         ValueError
             If ``origin_file_ids`` is not a list of integers.
         """
+
+        ScienceFileTable = science_file_table.return_class()
+        StatusTable = status_table.return_class()
 
         with session.begin() as sql_session:
             # Validate and fetch origin files if provided
@@ -601,6 +612,8 @@ class MetaTracker:
         bool
             ``True`` if the instrument short name is found in the database.
         """
+        InstrumentTable = instrument_table.return_class()
+
         with session.begin() as sql_session:
             instruments = sql_session.query(InstrumentTable).all()
             valid_instrument_short_names = [
@@ -625,6 +638,8 @@ class MetaTracker:
         str
             Short name of the matching file type.
         """
+        FileTypeTable = file_type_table.return_class()
+
         with session.begin() as sql_session:
             file_type = (
                 sql_session.query(FileTypeTable)
@@ -650,6 +665,8 @@ class MetaTracker:
         bool
             ``True`` if the extension matches a known file type.
         """
+        FileTypeTable = file_type_table.return_class()
+
         with session.begin() as sql_session:
             file_types = sql_session.query(FileTypeTable).all()
             valid_extensions = [file_type.extension for file_type in file_types]
@@ -672,6 +689,8 @@ class MetaTracker:
         bool
             ``True`` if the file level is found in the database.
         """
+        FileLevelTable = file_level_table.return_class()
+
         with session.begin() as sql_session:
             file_levels = sql_session.query(FileLevelTable).all()
             valid_file_levels = [file_level.short_name for file_level in file_levels]
@@ -741,6 +760,8 @@ class MetaTracker:
             Mapping of instrument IDs to their short names.
             Example: ``{1: "meddea", 2: "sharp"}``.
         """
+        InstrumentTable = instrument_table.return_class()
+
         with session.begin() as sql_session:
             instruments = sql_session.query(InstrumentTable).all()
             result: dict[int, str] = {
@@ -774,7 +795,7 @@ class MetaTracker:
             instruments = self.get_instruments(session)
             amount_of_instruments = len(instruments)
             configurations: list[Any] = sql_session.query(
-                InstrumentConfigurationTable
+                instrument_configuration_table.return_class()
             ).all()
 
             instrument_configurations: dict[int, list[str]] = {}

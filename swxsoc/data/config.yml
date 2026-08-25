@@ -12,6 +12,40 @@ general:
   # as the default and primary time variable key
   default_timeseries_key: Epoch
 
+# Default Database Host used by the MetaTracker file-metadata database
+db_host: sqlite:///
+
+# Catalog of file types recognized across missions (used by MetaTracker)
+file_types:
+  - short_name: bin
+    full_name: Raw BINARY
+    description: Raw Binary File
+    extension: .bin
+  - short_name: dat
+    full_name: Raw DAT
+    description: Raw Dat File
+    extension: .dat
+  - short_name: idx
+    full_name: Raw IDX
+    description: Raw IDX File
+    extension: .idx
+  - short_name: cdf
+    full_name: Common Data Format
+    description: Common Data Format File
+    extension: .cdf
+  - short_name: fits
+    full_name: Flexible Image Transport System
+    description: Flexible Image Transport System File
+    extension: .fits
+  - short_name: csv
+    full_name: Comma Separated Values
+    description: CSV File
+    extension: .csv
+  - short_name: json
+    full_name: JavaScript Object Notation
+    description: JSON File
+    extension: .json
+
 selected_mission: demo
 
 missions_data:
@@ -19,13 +53,7 @@ missions_data:
     file_extension: cdf # The File Extension Used for Archive Files and Science File Formats
     min_valid_time: 2020-01-01T00:00:00 # The Minimum Valid Time for this Mission (in ISO8601 format)
     max_valid_time: now # The Maximum Valid Time for this Mission (in ISO8601 format, or "now" for the current time)
-    valid_data_levels: # List of Valid Data Levels for this Mission
-      - l0
-      - ql
-      - l1
-      - l2
-      - l3
-    data_levels: # Detailed data level definitions for MetaTracker
+    data_levels: # Detailed data level definitions for this mission (short_name is also used as the valid data level)
       - short_name: l0
         full_name: Level 0
         description: Level 0 File
@@ -68,13 +96,7 @@ missions_data:
     file_extension: cdf
     min_valid_time: 2020-01-01T00:00:00
     max_valid_time: now
-    valid_data_levels:
-      - l0
-      - l1
-      - ql
-      - l2
-      - l3
-    data_levels: # Detailed data level definitions for MetaTracker
+    data_levels: # Detailed data level definitions for this mission (short_name is also used as the valid data level)
       - short_name: l0
         full_name: Level 0
         description: Level 0 File
@@ -112,14 +134,7 @@ missions_data:
     file_extension: fits
     min_valid_time: 2020-01-01T00:00:00
     max_valid_time: now
-    valid_data_levels:
-      - raw
-      - l0
-      - l1
-      - ql
-      - l2
-      - l3
-    data_levels: # Detailed data level definitions for MetaTracker
+    data_levels: # Detailed data level definitions for this mission (short_name is also used as the valid data level)
       - short_name: raw
         full_name: RAW
         description: RAW File
@@ -178,11 +193,19 @@ missions_data:
   swxsoc_pipeline: # A special "mission" for SWxSOC affiliated instruments. 
   # This is a collection of multuple instruments and missions grouped together for convenience.
     file_extension: cdf
-    valid_data_levels:
-      - raw
-      - l1c
-      - l2
-      - l3
+    data_levels: # Detailed data level definitions for this mission (short_name is also used as the valid data level)
+      - short_name: raw
+        full_name: RAW
+        description: RAW File
+      - short_name: l1c
+        full_name: Level 1C
+        description: Level 1C File
+      - short_name: l2
+        full_name: Level 2
+        description: Level 2 File
+      - short_name: l3
+        full_name: Level 3
+        description: Level 3 File
     instruments:
       - name: reach
         shortname: reach
@@ -202,13 +225,25 @@ missions_data:
     file_extension: cdf
     min_valid_time: 2026-01-01T00:00:00
     max_valid_time: now
-    valid_data_levels:
-      - raw
-      - l0
-      - l1
-      - ql
-      - l2
-      - l3
+    data_levels: # Detailed data level definitions for this mission (short_name is also used as the valid data level)
+      - short_name: raw
+        full_name: RAW
+        description: RAW File
+      - short_name: l0
+        full_name: Level 0
+        description: Level 0 File
+      - short_name: l1
+        full_name: Level 1
+        description: Level 1 File
+      - short_name: ql
+        full_name: Quick Look
+        description: Quick Look File
+      - short_name: l2
+        full_name: Level 2
+        description: Level 2 File
+      - short_name: l3
+        full_name: Level 3
+        description: Level 3 File
     instruments:
       - name: iaxis
         shortname: iaxis

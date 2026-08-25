@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import declarative_base
 
-from swxsoc.db import CONFIGURATION, create_engine, create_session
+import swxsoc
+from swxsoc.db import create_engine, create_session
 from swxsoc.db.tables import (
     create_table,
     create_tables,
@@ -18,7 +19,7 @@ def test_get_tables() -> None:
     engine = create_engine("sqlite://")
 
     # Get mission name at runtime
-    MISSION_NAME = CONFIGURATION.mission_name
+    MISSION_NAME = swxsoc.config["mission"]["mission_name"]
     assert isinstance(MISSION_NAME, str)
 
     # Create Base
@@ -105,7 +106,7 @@ def test_table_exists() -> None:
 
 def test_create_tables() -> None:
     # Get mission name at runtime
-    MISSION_NAME = CONFIGURATION.mission_name
+    MISSION_NAME = swxsoc.config["mission"]["mission_name"]
 
     # Create engine and session
     engine = create_engine("sqlite://")
@@ -139,7 +140,7 @@ def test_create_tables() -> None:
 
 def test_create_tables_existing() -> None:
     # Get mission name at runtime
-    MISSION_NAME = CONFIGURATION.mission_name
+    MISSION_NAME = swxsoc.config["mission"]["mission_name"]
 
     # Create engine and session
     engine = create_engine("sqlite://")
@@ -176,7 +177,7 @@ def test_create_tables_existing() -> None:
 
 def test_remove_tables() -> None:
     # Get mission name at runtime
-    MISSION_NAME = CONFIGURATION.mission_name
+    MISSION_NAME = swxsoc.config["mission"]["mission_name"]
 
     # Create engine and session
     engine = create_engine("sqlite://")

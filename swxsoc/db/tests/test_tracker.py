@@ -5,10 +5,12 @@ import pytest
 
 import swxsoc
 from swxsoc.db import _test_files_directory, create_engine, create_session
-from swxsoc.db.tables import create_tables
-from swxsoc.db.tables.science_file_table import ScienceFileTable
-from swxsoc.db.tables.science_product_table import ScienceProductTable
-from swxsoc.db.tables.status_table import StatusTable
+from swxsoc.db.tables import (
+    create_tables,
+    science_file_table,
+    science_product_table,
+    status_table,
+)
 from swxsoc.db.tracker import MetaTracker
 from swxsoc.util import util  # type: ignore
 
@@ -156,6 +158,7 @@ def test_tracker_parse_file(use_mission) -> None:
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
     create_tables(engine=engine)
+    ScienceFileTable = science_file_table.return_class()
 
     # Science File Parser
     science_file_parser = util.parse_science_filename
@@ -195,6 +198,8 @@ def test_add_to_status_table() -> None:
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
     create_tables(engine=engine)
+    ScienceFileTable = science_file_table.return_class()
+    StatusTable = status_table.return_class()
 
     # Create a test science file entry in the database
     science_file_id = 1
@@ -287,7 +292,8 @@ def test_add_to_status_table() -> None:
         )
 
 
-def test_tracker_parse_science_file() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_tracker_parse_science_file(use_mission) -> None:
     # Create testfile with name padreMDA0_250403185914.dat
     test_file = Path(TEST_SCIENCE_FILENAME)
 
@@ -307,7 +313,8 @@ def test_tracker_parse_science_file() -> None:
     swxsoc.log.info(test_tracker.parse_science_file_data(file=test_file))
 
 
-def test_track_is_valid_instrument() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_track_is_valid_instrument(use_mission) -> None:
     # Create testfile with name padreMDA0_250403185914.dat
     test_file = Path(TEST_SCIENCE_FILENAME)
 
@@ -340,7 +347,8 @@ def test_track_is_valid_instrument() -> None:
         assert e is not None
 
 
-def test_get_instruments() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_get_instruments(use_mission) -> None:
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
     create_tables(engine=engine)
@@ -356,7 +364,8 @@ def test_get_instruments() -> None:
     assert len(instruments) == 3
 
 
-def test_get_instrument_configurations() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_get_instrument_configurations(use_mission) -> None:
     # Create testfile with name padreMDA0_250403185914.dat
     Path(TEST_SCIENCE_FILENAME)
 
@@ -384,7 +393,8 @@ def test_get_instrument_configurations() -> None:
     swxsoc.log.info(instrument_configurations)
 
 
-def test_get_instrument_by_id() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_get_instrument_by_id(use_mission) -> None:
     # Create testfile with name padreMDA0_250403185914.dat
     Path(TEST_SCIENCE_FILENAME)
 
@@ -406,7 +416,8 @@ def test_get_instrument_by_id() -> None:
     assert instrument == "meddea"
 
 
-def test_map_instrument_list() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_map_instrument_list(use_mission) -> None:
     # Create testfile with name padreMDA0_250403185914.dat
     Path(TEST_SCIENCE_FILENAME)
 
@@ -432,13 +443,17 @@ def test_map_instrument_list() -> None:
     assert len(instrument_map) == 3
 
 
-def test_track() -> None:
+@pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
+def test_track(use_mission) -> None:
     # Create testfile with name padreMDA0_250403185914.dat
     engine = create_engine(TEST_DB_HOST)
 
     session = create_session(engine)
 
     create_tables(engine=engine)
+    ScienceFileTable = science_file_table.return_class()
+    ScienceProductTable = science_product_table.return_class()
+    StatusTable = status_table.return_class()
 
     # Science File Parser
     science_file_parser = util.parse_science_filename
@@ -528,6 +543,8 @@ def test_add_to_status_table_with_origin_files() -> None:
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
     create_tables(engine=engine)
+    ScienceFileTable = science_file_table.return_class()
+    StatusTable = status_table.return_class()
 
     # Create two science files to act as origin files
     with session.begin() as sql_session:

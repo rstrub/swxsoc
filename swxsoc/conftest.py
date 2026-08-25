@@ -4,49 +4,32 @@ Shared pytest fixtures for all swxsoc tests.
 These fixtures are automatically available to all test modules in the package.
 """
 
-import importlib.util
 import os
-from pathlib import Path
 
 import pytest
 
 import swxsoc
-import swxsoc.db
 
-TRACKER_TESTS_DIR = Path(__file__).parent / "db" / "tracker" / "tests"
+try:
+    import swxsoc.db
 
-
-def _has_tracker_dependencies() -> bool:
-    return not (
-        importlib.util.find_spec("sqlalchemy") is None
-        or importlib.util.find_spec("tenacity") is None
-    )
-
-
-def pytest_ignore_collect(collection_path, config):
-    if _has_tracker_dependencies():
-        return False
-
-    try:
-        path = Path(collection_path)
-    except TypeError:
-        path = Path(str(collection_path))
-
-    return TRACKER_TESTS_DIR in (path, *path.parents)
+    HAS_DB = True
+except ImportError:
+    HAS_DB = False
 
 
 @pytest.fixture(autouse=True, scope="function")
 def default_test_mission(monkeypatch, request):
     """
     Automatically set HERMES as the default mission for all tests.
-    
+
     This fixture runs automatically before each test function and ensures
     that tests have a consistent mission configuration (HERMES) unless
     explicitly overridden by the test itself or the use_mission fixture.
-    
+
     The autouse=True makes this fixture apply to all tests without explicit declaration.
     The monkeypatch ensures environment changes are cleaned up after each test.
-    
+
     Note: This does NOT affect doctests. Doctests must explicitly set the
     mission in their example code if they need a specific mission configuration.
     """
@@ -54,38 +37,39 @@ def default_test_mission(monkeypatch, request):
     if "SWXSOC_MISSION" not in os.environ:
         monkeypatch.setenv("SWXSOC_MISSION", "hermes")
         swxsoc.reconfigure()
-        swxsoc.db.reconfigure()
+        if HAS_DB:
+            swxsoc.db.reconfigure()
 
 
 @pytest.fixture(scope="function")
 def use_mission(request, monkeypatch):
     """
     Fixture to explicitly set a mission for a test function.
-    
+
     This fixture allows tests to specify which mission configuration to use
     via indirect parametrization. It overrides the default_test_mission fixture.
-    
+
     Parameters
     ----------
     request : pytest.Request
         The pytest request object containing the parameter for the mission.
     monkeypatch : pytest.MonkeyPatch
         The pytest monkeypatch fixture for environment modification.
-        
+
     Yields
     ------
     str
         The name of the mission that was configured for the test.
-        
+
     Examples
     --------
     Single mission test::
-    
+
         @pytest.mark.parametrize('use_mission', ['padre'], indirect=True)
         def test_with_padre(use_mission):
             # Test runs with PADRE mission config
             assert swxsoc.config['mission']['mission_name'] == 'padre'
-    
+
     Multiple missions::
 
         @pytest.mark.parametrize('use_mission', ['hermes', 'padre', 'swxsoc'], indirect=True)
@@ -96,7 +80,8 @@ def use_mission(request, monkeypatch):
     mission = request.param if hasattr(request, "param") else "hermes"
     monkeypatch.setenv("SWXSOC_MISSION", mission)
     swxsoc.reconfigure()
-    swxsoc.db.reconfigure()
+    if HAS_DB:
+        swxsoc.db.reconfigure()
     yield mission
     # Explicitly reconfigure back to default after test completes
     # This is necessary because swxsoc.config is module-level state
@@ -104,5 +89,5 @@ def use_mission(request, monkeypatch):
     # This ensures the config is reset even if monkeypatch cleanup hasn't run yet
     monkeypatch.setenv("SWXSOC_MISSION", "hermes")
     swxsoc.reconfigure()
-    swxsoc.db.reconfigure()
-
+    if HAS_DB:
+        swxsoc.db.reconfigure()

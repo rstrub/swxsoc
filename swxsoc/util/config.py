@@ -28,6 +28,7 @@ __all__ = [
     "get_incoming_bucket",
     "get_instrument_bucket",
     "get_all_instrument_buckets",
+    "get_instrument_package",
 ]
 
 # Default directories for Lambda Environment
@@ -36,6 +37,52 @@ CACHE_DIR = "/tmp/.cache"
 
 # AWS region used for the Timestream client session.
 TSD_REGION = os.getenv("AWS_REGION", "us-east-1")
+
+# Default catalog of file types, used if not defined in the user's config.yml
+DEFAULT_FILE_TYPES = [
+    {
+        "short_name": "bin",
+        "full_name": "Raw BINARY",
+        "description": "Raw Binary File",
+        "extension": ".bin",
+    },
+    {
+        "short_name": "dat",
+        "full_name": "Raw DAT",
+        "description": "Raw Dat File",
+        "extension": ".dat",
+    },
+    {
+        "short_name": "idx",
+        "full_name": "Raw IDX",
+        "description": "Raw IDX File",
+        "extension": ".idx",
+    },
+    {
+        "short_name": "cdf",
+        "full_name": "Common Data Format",
+        "description": "Common Data Format File",
+        "extension": ".cdf",
+    },
+    {
+        "short_name": "fits",
+        "full_name": "Flexible Image Transport System",
+        "description": "Flexible Image Transport System File",
+        "extension": ".fits",
+    },
+    {
+        "short_name": "csv",
+        "full_name": "Comma Separated Values",
+        "description": "CSV File",
+        "extension": ".csv",
+    },
+    {
+        "short_name": "json",
+        "full_name": "JavaScript Object Notation",
+        "description": "JSON File",
+        "extension": ".json",
+    },
+]
 
 # This is to fix issue with AppDirs not writing to /tmp/ in AWS Lambda
 if not os.getenv("LAMBDA_ENVIRONMENT"):
@@ -67,6 +114,11 @@ def load_config():
 
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
+
+    # Catalog of recognized file types, and the database host used by the
+    # MetaTracker file-metadata database
+    config["file_types"] = config.get("file_types", DEFAULT_FILE_TYPES)
+    config["db_host"] = config.get("db_host", "sqlite:///")
 
     # Loaded either from env var or from config file
     selected_mission = os.getenv("SWXSOC_MISSION", config["selected_mission"])
@@ -103,9 +155,11 @@ def load_config():
         "bucket_mission_name": bucket_mission_name,
         "min_valid_time": min_valid_time,
         "max_valid_time": max_valid_time,
-        "valid_data_levels": mission_data.get(
-            "valid_data_levels", ["raw", "l0", "l1", "ql", "l2", "l3", "l4"]
-        ),
+        "data_levels": mission_data.get("data_levels", []),
+        "valid_data_levels": [
+            data_level["short_name"]
+            for data_level in mission_data.get("data_levels", [])
+        ],
         "inst_names": [inst["name"] for inst in mission_data.get("instruments", [])],
         "inst_shortnames": [
             inst["shortname"] for inst in mission_data.get("instruments", [])

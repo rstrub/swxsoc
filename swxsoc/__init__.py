@@ -42,4 +42,4 @@ def reconfigure():
 
 
 # Then you can be explicit to control what ends up in the namespace,
-__all__ = ["config", "print_config"]
+__all__ = ["config", "print_config", "reconfigure"]
