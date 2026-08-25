@@ -15,6 +15,20 @@ import boto3
 
 import swxsoc
 
+__all__ = [
+    "create_s3_client_session",
+    "parse_file_key",
+    "create_s3_file_key",
+    "list_files_in_bucket",
+    "check_file_existence_in_target_buckets",
+    "object_exists",
+    "download_file_from_s3",
+    "upload_file_to_s3",
+    "copy_file_in_s3",
+    "get_science_file",
+    "push_science_file",
+]
+
 
 def create_s3_client_session():
     """

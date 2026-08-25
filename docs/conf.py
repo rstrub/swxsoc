@@ -98,18 +98,18 @@ intersphinx_mapping = {
         (None, "http://data.astropy.org/intersphinx/python3.inv"),
     ),
     "numpy": (
-        "https://docs.scipy.org/doc/numpy/",
+        "https://numpy.org/doc/stable/",
         (None, "http://data.astropy.org/intersphinx/numpy.inv"),
     ),
     "scipy": (
-        "https://docs.scipy.org/doc/scipy/reference/",
+        "https://docs.scipy.org/doc/scipy/",
         (None, "http://data.astropy.org/intersphinx/scipy.inv"),
     ),
     "matplotlib": (
-        "https://matplotlib.org/",
+        "https://matplotlib.org/stable/",
         (None, "http://data.astropy.org/intersphinx/matplotlib.inv"),
     ),
-    "astropy": ("http://docs.astropy.org/en/stable/", None),
+    "astropy": ("https://docs.astropy.org/en/stable/", None),
     "sunpy": ("https://docs.sunpy.org/en/stable/", None),
     "ndcube": ("https://docs.sunpy.org/projects/ndcube/en/stable/", None),
     "hermes_core": ("https://hermes-core.readthedocs.io/en/latest/", None),

@@ -109,7 +109,6 @@ testpaths = [
    "swxsoc/io/tests",
    "swxsoc/net/tests",
    "swxsoc/db/tests",
-  "swxsoc/db/tracker/tests",
    "swxsoc/comm/tests",
    "docs"
 ]

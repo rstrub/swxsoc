@@ -9,6 +9,8 @@ import boto3
 import swxsoc
 from swxsoc.util.util import is_production_environment
 
+__all__ = ["invoke_reprocessing_lambda"]
+
 
 def invoke_reprocessing_lambda(bucket: str, key: str):
     """
