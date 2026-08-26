@@ -10,8 +10,6 @@ API Reference
    :no-inheritance-diagram:
 .. automodapi:: swxsoc.db
    :no-inheritance-diagram:
-.. automodapi:: swxsoc.db.config
-   :no-inheritance-diagram:
 .. automodapi:: swxsoc.db.tables
    :no-inheritance-diagram:
 .. automodapi:: swxsoc.db.timeseries
