@@ -5,7 +5,7 @@
       "enabled": false,
       "repository": "PADRESat/padre_sharp",
       "ref": "main",
-      "python_version": "3.10",
+      "python_version": "3.12",
       "install_command": "python -m pip install -e .[test]",
       "test_command": "pytest padre_sharp --tb=short -q"
     },
@@ -14,7 +14,7 @@
       "enabled": true,
       "repository": "PADRESat/padre_meddea",
       "ref": "main",
-      "python_version": "3.10",
+      "python_version": "3.12",
       "install_command": "python -m pip install -e .[test]",
       "test_command": "pytest padre_meddea --tb=short -q"
     },
@@ -23,7 +23,7 @@
       "enabled": true,
       "repository": "PADRESat/padre_craft",
       "ref": "main",
-      "python_version": "3.10",
+      "python_version": "3.12",
       "install_command": "python -m pip install -e .[test]",
       "test_command": "pytest padre_craft --tb=short -q"
     },
@@ -32,7 +32,7 @@
       "enabled": true,
       "repository": "swxsoc/swxsoc_reach",
       "ref": "main",
-      "python_version": "3.10",
+      "python_version": "3.12",
       "install_command": "python -m pip install -e .[test]",
       "test_command": "pytest swxsoc_reach --tb=short -q"
     },
