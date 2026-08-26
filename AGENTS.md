@@ -17,7 +17,7 @@
 - `swxsoc/io/`: File format handlers (`base_handler.py`, `cdf_handler.py`), fill value logic (`fillval.py`), and S3 access (`s3.py`).
 - `swxsoc/util/`: Shared utilities (config, logging, schema, validation, exceptions).
 - `swxsoc/net/`: Data discovery/retrieval client logic.
-- `swxsoc/db/`: Database writers and related integrations.
+- `swxsoc/db/`: Two independent database integrations: `swxsoc/db/timeseries.py` writes scalar measurements to AWS Timestream for Grafana dashboards, and `swxsoc/db/tracker.py` + `swxsoc/db/tables/` track file-level provenance and processing status in a mission-aware relational schema. Both are optional (`tracker` extra) and guarded via `swxsoc/db/_optional.py`'s `require_tracker_dependencies()`.
 - `swxsoc/comm/`: Outbound notifications (for example Slack).
 - `swxsoc/scripts/`: Command-line entry points.
 - `swxsoc/data/`: Packaged config (`config.yml`) and CDF attribute schema YAML files.
@@ -27,7 +27,8 @@
 - Extras are defined in `pyproject.toml` under `[project.optional-dependencies]`:
   - `cdf`: `spacepy`, `sammi-cdf`, `matplotlib` — required for all CDF read/write/validation and SWXData plotting.
   - `fits`: no additional packages; FITS support ships via `astropy` in the base dependencies.
-  - `all`: `swxsoc[cdf,fits]` — every supported file format.
+  - `tracker`: `sqlalchemy`, `tenacity` — required for `swxsoc.db.tracker`/`swxsoc.db.tables` (MetaTracker relational file tracking). Not required for `swxsoc.db.timeseries` (Timestream writer), which only needs the base dependencies.
+  - `all`: `swxsoc[cdf,fits,tracker]` — every supported file format.
   - `docs`, `test`, `style`: documentation, test, and lint/format tooling.
   - `dev`: `swxsoc[docs,test,style]`.
 - The base install must stay importable and usable without any extra installed. CI enforces this with a core-only job that installs `.[test]`, alongside a full job that installs `.[all,test]`.
@@ -49,9 +50,27 @@
       )
   ```
 - See `swxsoc/io/cdf_handler.py`, `swxsoc/util/validation.py`, and `swxsoc/util/schema.py` (which degrades gracefully with a stub when `sammi-cdf` is missing) for reference implementations.
+- `swxsoc/db/` uses a variant of this pattern: `swxsoc/db/_optional.py` exposes `HAS_SQLALCHEMY`/`HAS_TENACITY` flags plus a `require_tracker_dependencies()` helper that raises an actionable `ImportError`. Modules call it inside each function body (or once at module import time for `swxsoc/db/tracker.py`) rather than only guarding the import — see `swxsoc/db/tables/__init__.py` and `swxsoc/db/tracker.py` for reference.
 - Never import an optional dependency at the top level of `swxsoc/__init__.py` or in a module that base functionality imports unconditionally.
 - Tests that need an extra must skip cleanly, using module-level `pytest.importorskip("spacepy.pycdf")`.
 - When adding a new optional dependency, add it to an extra in `pyproject.toml`, guard the import, and confirm the core-only test run still passes.
+
+## Documentation Map
+- When changing code, check whether these docs need updating too:
+
+  | Code area | Docs to check |
+  | --- | --- |
+  | `swxsoc/io/`, `swxsoc/swxdata.py` (CDF/FITS) | `docs/user-guide/reading_writing_data.rst`, `docs/user-guide/fillval_and_masks.rst`, `docs/user-guide/cdf_format_guide.rst` |
+  | `swxsoc/db/timeseries.py` | `docs/user-guide/recording_to_timestream.rst` |
+  | `swxsoc/db/tracker.py`, `swxsoc/db/tables/` | `docs/user-guide/metatracker_guide.rst` |
+  | `swxsoc/util/config.py`, `config.yml`, mission selection | `docs/user-guide/customization.rst`, `docs/dev-guide/config.rst` |
+  | `swxsoc/comm/` | `docs/user-guide/comms_clients.rst` |
+  | `swxsoc/net/` | `docs/user-guide/retrieving_data.rst` |
+  | `swxsoc/util/logger.py` | `docs/user-guide/logger.rst` |
+  | `swxsoc/util/schema.py`, CDF attribute schemas | `docs/user-guide/schema_information_guide.rst` |
+  | Any public API addition/removal | `docs/api.rst` (`automodapi` entries) |
+  | `pyproject.toml` optional-dependencies changes | This file's "Optional Dependency Groups" section, `docs/dev-guide/dev_env.rst` |
+  | Any user-facing behavior change | `docs/whatsnew/` changelog entry |
 
 ## Build and Test
 - Install development dependencies:
@@ -80,6 +99,7 @@
 ## Project Conventions and Pitfalls
 - Configuration is mission-aware; `SWXSOC_MISSION` can override defaults, otherwise `selected_mission` in `config.yml` wins.
 - If tests mutate mission/config environment state, call `swxsoc.reconfigure()` before assertions. The autouse fixture in `swxsoc/conftest.py` resets the mission to `HERMES` per test.
+- `swxsoc.reconfigure()` only reloads `swxsoc.config`; it does **not** rebuild `swxsoc.db.tables`' ORM classes. Any code that changes the active mission and also uses the tracker (`swxsoc.db.tracker`/`swxsoc.db.tables`) must call `swxsoc.db.reconfigure()` immediately afterward (guarded on `swxsoc.db.HAS_SQLALCHEMY`), or the tracker's table names/columns will still reflect the previous mission. `swxsoc/conftest.py`'s `default_test_mission` and `use_mission` fixtures do this automatically and are the reference pattern.
 - Doctests do not use pytest fixtures automatically; set required mission/config context directly in doctest examples.
 - Keep documentation one sentence per line in RST files.
 - For detailed guidance, reference:
@@ -87,3 +107,4 @@
   - [docs/dev-guide/tests.rst](docs/dev-guide/tests.rst)
   - [docs/dev-guide/docs.rst](docs/dev-guide/docs.rst)
   - [docs/user-guide/customization.rst](docs/user-guide/customization.rst) for config/mission behavior
+  - [docs/user-guide/metatracker_guide.rst](docs/user-guide/metatracker_guide.rst) for the `swxsoc.db` tracker/reconfigure behavior

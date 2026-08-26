@@ -14,6 +14,7 @@ For more details checkout the :ref:`reference`.
    reading_writing_data
    fillval_and_masks
    recording_to_timestream
+   metatracker_guide
    grafana_annotation_management
    schema_information_guide
    cdf_format_guide

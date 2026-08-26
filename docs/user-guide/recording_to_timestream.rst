@@ -7,6 +7,10 @@ Record Measurements to AWS Timestream
 This module provides functionality to record measurements to an `AWS Timestream <https://docs.aws.amazon.com/timestream/>`_ database which can then be visualized in a Grafana Dashboard.
 Measurements can be anything such as housekeeping data or science data as long as each measurement is associated with a time stamp.
 
+.. note::
+    Looking to track file-level provenance and processing status instead of
+    scalar measurements? See :ref:`metatracker_guide` for `~swxsoc.db.tracker.MetaTracker`.
+
 .. warning::
     This functionality requires AWS credentials with permission to write to the AWS timestream database.
     If this functionality is called by the swxsox cloud pipeline then those credentials are already available.
