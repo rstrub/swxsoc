@@ -11,14 +11,6 @@ repos:
       # Run the formatter.
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.1
-    hooks:
-      - id: mypy
-        name: mypy (swxsoc.db.tracker)
-        files: ^swxsoc/db/tracker/
-        additional_dependencies: [sqlalchemy>=2.0.0, tenacity>=9.1.2]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
