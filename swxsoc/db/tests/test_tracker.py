@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from pathlib import Path
 
 import pytest
 
@@ -7,7 +6,7 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("tenacity")
 
 import swxsoc
-from swxsoc.db import _test_files_directory, create_engine, create_session
+from swxsoc.db import create_engine, create_session
 from swxsoc.db.tables import (
     create_tables,
     science_file_table,
@@ -18,14 +17,28 @@ from swxsoc.db.tracker import MetaTracker
 from swxsoc.util import util  # type: ignore
 
 TEST_DB_HOST = "sqlite://"
-TEST_RANDOM_FILENAME = _test_files_directory / "ducks.txt"
-TEST_SCIENCE_FILENAME = _test_files_directory / "padreMDA0_250403185914.dat"
-TEST_BAD_SCIENCE_FILENAME = (
-    _test_files_directory / "hermes_NEM_2l_2022259-030002_v01.bin"
-)
-TEST_NON_EXISTING_SCIENCE_FILENAME = (
-    _test_files_directory / "hermes_NEM_l0_2022259-030002_v01.bop"
-)
+
+
+@pytest.fixture
+def test_science_files(tmp_path):
+    """Generate test science files in temporary directory.
+
+    Returns a dict with keys for each test file type. Non-existent files are
+    not created (for testing error handling).
+    """
+    files = {
+        "science": tmp_path / "padreMDA0_250403185914.dat",
+        "random": tmp_path / "ducks.txt",
+        "bad_science": tmp_path / "hermes_NEM_2l_2022259-030002_v01.bin",
+        "non_existing": tmp_path / "hermes_NEM_l0_2022259-030002_v01.bop",
+    }
+
+    # Create all files except the non-existing one
+    for key, path in files.items():
+        if key != "non_existing":
+            path.write_text("Test")
+
+    return files
 
 
 def test_tracker() -> None:
@@ -55,13 +68,10 @@ def test_tracker() -> None:
         assert isinstance(e, ConnectionError)
 
 
-def test_tracker_parse_extension() -> None:
+def test_tracker_parse_extension(test_science_files) -> None:
     """
     Test Tracker parse extension
     """
-    # Create testfile with name padreMDA0_250403185914.dat
-    file_name = Path(TEST_SCIENCE_FILENAME)
-
     engine = create_engine(TEST_DB_HOST)
 
     # Science File Parser
@@ -69,31 +79,21 @@ def test_tracker_parse_extension() -> None:
 
     test_tracker = MetaTracker(engine, science_file_parser=science_file_parser)
 
-    extension = test_tracker.parse_extension(file_name)
-
+    extension = test_tracker.parse_extension(test_science_files["science"])
     assert extension == ".dat"
 
-    file_name = Path(TEST_RANDOM_FILENAME)
-
-    extension = test_tracker.parse_extension(file_name)
-
+    extension = test_tracker.parse_extension(test_science_files["random"])
     assert extension == ".txt"
 
-    file_name = Path(TEST_NON_EXISTING_SCIENCE_FILENAME)
-
-    extension = test_tracker.parse_extension(file_name)
-
+    extension = test_tracker.parse_extension(test_science_files["non_existing"])
     assert extension == ".bop"
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_tracker_is_valid_file_type(use_mission) -> None:
+def test_tracker_is_valid_file_type(use_mission, test_science_files) -> None:
     """
     Test Tracker is valid file type
     """
-    # Create testfile with name padreMDA0_250403185914.dat
-    test_good_file = Path(TEST_SCIENCE_FILENAME)
-
     # Create engine and session
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
@@ -106,28 +106,18 @@ def test_tracker_is_valid_file_type(use_mission) -> None:
 
     test_tracker = MetaTracker(engine=engine, science_file_parser=science_file_parser)
 
-    extension = test_tracker.parse_extension(test_good_file)
-
+    extension = test_tracker.parse_extension(test_science_files["science"])
     assert test_tracker.is_valid_file_type(session=session, extension=extension)
 
-    # Create testfile with name padreMDA0_250403185914.dat
-    test_bad_file = Path(TEST_NON_EXISTING_SCIENCE_FILENAME)
-
-    test_tracker = MetaTracker(engine=engine, science_file_parser=science_file_parser)
-
-    extension = test_tracker.parse_extension(test_bad_file)
-
+    extension = test_tracker.parse_extension(test_science_files["non_existing"])
     assert not test_tracker.is_valid_file_type(session=session, extension=extension)
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_tracker_parse_filename(use_mission) -> None:
+def test_tracker_parse_filename(use_mission, test_science_files) -> None:
     """
     Test Tracker parse filename
     """
-    # Create testfile with name padreMDA0_250403185914.dat
-    file_name = Path(TEST_SCIENCE_FILENAME)
-
     engine = create_engine(TEST_DB_HOST)
 
     # Science File Parser
@@ -135,28 +125,19 @@ def test_tracker_parse_filename(use_mission) -> None:
 
     test_tracker = MetaTracker(engine=engine, science_file_parser=science_file_parser)
 
-    filename = test_tracker.parse_filename(file_name)
-
+    filename = test_tracker.parse_filename(test_science_files["science"])
     assert filename == "padreMDA0_250403185914"
 
-    file_name = Path(TEST_RANDOM_FILENAME)
-
-    filename = test_tracker.parse_filename(file_name)
-
+    filename = test_tracker.parse_filename(test_science_files["random"])
     assert filename == "ducks"
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_tracker_parse_file(use_mission) -> None:
+def test_tracker_parse_file(use_mission, test_science_files) -> None:
     """
     Test Tracker parse file
     """
-    # Create testfile with name padreMDA0_250403185914.dat
-    file_name = Path(TEST_SCIENCE_FILENAME)
-
-    # Create file TEST_SCIENCE_FILENAME
-    with open(TEST_SCIENCE_FILENAME, "w") as f:
-        f.write("Test")
+    file_name = test_science_files["science"]
 
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
@@ -296,9 +277,8 @@ def test_add_to_status_table() -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_tracker_parse_science_file(use_mission) -> None:
-    # Create testfile with name padreMDA0_250403185914.dat
-    test_file = Path(TEST_SCIENCE_FILENAME)
+def test_tracker_parse_science_file(use_mission, test_science_files) -> None:
+    test_file = test_science_files["science"]
 
     engine = create_engine(TEST_DB_HOST)
 
@@ -317,9 +297,8 @@ def test_tracker_parse_science_file(use_mission) -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_track_is_valid_instrument(use_mission) -> None:
-    # Create testfile with name padreMDA0_250403185914.dat
-    test_file = Path(TEST_SCIENCE_FILENAME)
+def test_track_is_valid_instrument(use_mission, test_science_files) -> None:
+    test_file = test_science_files["science"]
 
     engine = create_engine(TEST_DB_HOST)
 
@@ -338,8 +317,7 @@ def test_track_is_valid_instrument(use_mission) -> None:
         session=session, instrument_short_name=instrument
     )
 
-    # Create testfile with name padreMDA0_250403185914.dat
-    test_file = Path(TEST_NON_EXISTING_SCIENCE_FILENAME)
+    test_file = test_science_files["non_existing"]
 
     test_tracker = MetaTracker(engine=engine, science_file_parser=science_file_parser)
 
@@ -351,7 +329,7 @@ def test_track_is_valid_instrument(use_mission) -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_get_instruments(use_mission) -> None:
+def test_get_instruments(use_mission, test_science_files) -> None:
     engine = create_engine(TEST_DB_HOST)
     session = create_session(engine)
     create_tables(engine=engine)
@@ -368,10 +346,7 @@ def test_get_instruments(use_mission) -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_get_instrument_configurations(use_mission) -> None:
-    # Create testfile with name padreMDA0_250403185914.dat
-    Path(TEST_SCIENCE_FILENAME)
-
+def test_get_instrument_configurations(use_mission, test_science_files) -> None:
     engine = create_engine(TEST_DB_HOST)
 
     session = create_session(engine)
@@ -397,10 +372,7 @@ def test_get_instrument_configurations(use_mission) -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_get_instrument_by_id(use_mission) -> None:
-    # Create testfile with name padreMDA0_250403185914.dat
-    Path(TEST_SCIENCE_FILENAME)
-
+def test_get_instrument_by_id(use_mission, test_science_files) -> None:
     engine = create_engine(TEST_DB_HOST)
 
     session = create_session(engine)
@@ -420,10 +392,7 @@ def test_get_instrument_by_id(use_mission) -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_map_instrument_list(use_mission) -> None:
-    # Create testfile with name padreMDA0_250403185914.dat
-    Path(TEST_SCIENCE_FILENAME)
-
+def test_map_instrument_list(use_mission, test_science_files) -> None:
     engine = create_engine(TEST_DB_HOST)
 
     session = create_session(engine)
@@ -447,8 +416,7 @@ def test_map_instrument_list(use_mission) -> None:
 
 
 @pytest.mark.parametrize("use_mission", ["padre"], indirect=True)
-def test_track(use_mission) -> None:
-    # Create testfile with name padreMDA0_250403185914.dat
+def test_track(use_mission, test_science_files) -> None:
     engine = create_engine(TEST_DB_HOST)
 
     session = create_session(engine)
@@ -464,11 +432,7 @@ def test_track(use_mission) -> None:
     test_tracker = MetaTracker(engine=engine, science_file_parser=science_file_parser)
     s3_key = "s3://padre/test_file/padreMDA0_250403185914.dat"
     s3_bucket = "padre"
-    file_path = Path(TEST_SCIENCE_FILENAME)
-
-    # Create file TEST_SCIENCE_FILENAME
-    with open(TEST_SCIENCE_FILENAME, "w") as f:
-        f.write("Test")
+    file_path = test_science_files["science"]
 
     # Define a test status
     test_status = {
@@ -485,7 +449,7 @@ def test_track(use_mission) -> None:
     # Test Non Existing File
     try:
         test_tracker.track(
-            file=Path(TEST_NON_EXISTING_SCIENCE_FILENAME),
+            file=test_science_files["non_existing"],
             s3_key=s3_key,
             s3_bucket=s3_bucket,
         )
@@ -517,13 +481,13 @@ def test_track(use_mission) -> None:
 
     # Test duplicate file tracking (should not raise error but update timestamp)
     test_tracker.track(
-        file=Path(TEST_SCIENCE_FILENAME), s3_key=s3_key, s3_bucket=s3_bucket
+        file=test_science_files["science"], s3_key=s3_key, s3_bucket=s3_bucket
     )
 
     # Test bad file type
     try:
         test_tracker.track(
-            file=Path(TEST_RANDOM_FILENAME), s3_key=s3_key, s3_bucket=s3_bucket
+            file=test_science_files["random"], s3_key=s3_key, s3_bucket=s3_bucket
         )
 
     except ValueError as e:
@@ -532,14 +496,14 @@ def test_track(use_mission) -> None:
     # Test bad file name
     try:
         test_tracker.track(
-            file=Path(TEST_BAD_SCIENCE_FILENAME), s3_key=s3_key, s3_bucket=s3_bucket
+            file=test_science_files["bad_science"], s3_key=s3_key, s3_bucket=s3_bucket
         )
 
     except ValueError as e:
         assert e is not None
 
 
-def test_add_to_status_table_with_origin_files() -> None:
+def test_add_to_status_table_with_origin_files(test_science_files) -> None:
     """
     Test add_to_status_table with origin files
     """

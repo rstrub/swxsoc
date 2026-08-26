@@ -4,7 +4,6 @@ Module to handle database operations
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from swxsoc.db._optional import HAS_SQLALCHEMY, require_tracker_dependencies
@@ -20,9 +19,6 @@ __all__ = [
     "create_session",
     "reconfigure",
 ]
-
-_package_directory = Path(__file__).parent
-_test_files_directory = _package_directory / "tests" / "test_files"
 
 
 # Function to check if you can connect to the database with SQLAlchemy
