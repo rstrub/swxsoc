@@ -26,8 +26,7 @@ def reconfigure():
     Reconfigure the module by reloading the configuration.
 
     This function reloads the configuration from the config.yml file
-    and updates the global `config` variable. It also reloads dependent
-    configurations (e.g., tracker) if their modules have been imported.
+    and updates the global `config` variable.
     This is useful for testing purposes when changes to the configuration
     file need to be applied without restarting the Python session.
 
