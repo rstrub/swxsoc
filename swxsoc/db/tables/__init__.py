@@ -21,10 +21,6 @@ from sqlalchemy.sql.schema import Table
 import swxsoc.db
 from swxsoc import log
 from swxsoc.db import create_session
-from swxsoc.db.config import (
-    compute_instrument_configurations,
-    compute_instrument_metadata,
-)
 from swxsoc.db.tables import base_table
 from swxsoc.db.tables import file_level_table as FileLevelTable
 from swxsoc.db.tables import file_type_table as FileTypeTable
@@ -35,6 +31,10 @@ from swxsoc.db.tables import instrument_table as InstrumentTable
 from swxsoc.db.tables import science_file_table as ScienceFileTable
 from swxsoc.db.tables import science_product_table as ScienceProductTable
 from swxsoc.db.tables import status_table as StatusTable
+from swxsoc.util.config import (
+    compute_instrument_configurations,
+    compute_instrument_metadata,
+)
 
 __all__ = [
     "reconfigure",

@@ -7,7 +7,9 @@ This code is based on that provided by SunPy see
 
 import os
 import shutil
+from itertools import combinations
 from pathlib import Path
+from typing import Any, Dict, List
 
 import yaml
 from astropy.time import Time
@@ -29,6 +31,8 @@ __all__ = [
     "get_instrument_bucket",
     "get_all_instrument_buckets",
     "get_instrument_package",
+    "compute_instrument_metadata",
+    "compute_instrument_configurations",
 ]
 
 # Default directories for Lambda Environment
@@ -333,6 +337,66 @@ def get_instrument_package(instrument_name: str) -> str:
     else:
         # otherwise, default to the convention of {mission_name}_{instrument_name}
         return f"{mission_config['mission_name'].lower()}_{instrument_name.lower()}"
+
+
+def compute_instrument_metadata() -> List[Dict[str, Any]]:
+    """
+    Compute instrument metadata for the MetaTracker database from the active
+    SWxSOC mission configuration.
+    Used to populate the ``instrument`` table in the MetaTracker database.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        A list of instrument metadata dictionaries, each containing
+        ``instrument_id``, ``description``, ``full_name``, and ``short_name``.
+    """
+    mission_config = swxsoc.config["mission"]
+    inst_names = mission_config["inst_names"]
+
+    return [
+        {
+            "instrument_id": idx + 1,
+            "description": f"{mission_config['inst_fullnames'][idx]} ({mission_config['inst_targetnames'][idx]})",
+            "full_name": mission_config["inst_fullnames"][idx],
+            "short_name": mission_config["inst_shortnames"][idx],
+        }
+        for idx in range(len(inst_names))
+    ]
+
+
+def compute_instrument_configurations() -> List[Dict[str, Any]]:
+    """
+    Compute all possible instrument configurations (combinations of
+    instruments) for the MetaTracker database from the active SWxSOC mission
+    configuration.
+    Used to populate the ``instrument_configuration`` table in the MetaTracker
+    database.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        A list of instrument configuration dictionaries, each containing an
+        ``instrument_configuration_id`` and one ``instrument_{i}_id`` key per
+        instrument slot (``None`` if unused in that combination).
+    """
+    num_instruments = len(swxsoc.config["mission"]["inst_names"])
+
+    instrument_configurations = []
+    config_id = 1
+    for r in range(1, num_instruments + 1):
+        for combo in combinations(range(1, num_instruments + 1), r):
+            config: Dict[str, Any] = {"instrument_configuration_id": config_id}
+            config.update(
+                {
+                    f"instrument_{i + 1}_id": combo[i] if i < len(combo) else None
+                    for i in range(num_instruments)
+                }
+            )
+            instrument_configurations.append(config)
+            config_id += 1
+
+    return instrument_configurations
 
 
 def _get_user_configdir():

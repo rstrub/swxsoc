@@ -17,10 +17,6 @@ from sqlalchemy.engine import Engine
 
 import swxsoc
 from swxsoc.db import create_engine, create_session
-from swxsoc.db.config import (
-    compute_instrument_configurations,
-    compute_instrument_metadata,
-)
 from swxsoc.db.tables import (
     create_tables,
     file_level_table,
@@ -34,6 +30,10 @@ from swxsoc.db.tables import (
     populate_instrument_table,
     science_product_table,
     sync_instrument_configuration_schema,
+)
+from swxsoc.util.config import (
+    compute_instrument_configurations,
+    compute_instrument_metadata,
 )
 
 MISSION_NAME = swxsoc.config["mission"]["mission_name"]

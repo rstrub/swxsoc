@@ -13,6 +13,14 @@ import swxsoc.db
 
 HAS_DB = swxsoc.db.HAS_SQLALCHEMY
 
+# When the package root is passed explicitly (for example, ``pytest swxsoc``),
+# pytest-doctestplus recursively imports package modules.  Tracker modules are
+# intentionally not importable without the optional tracker dependencies, so
+# exclude them from doctest collection in a core-only environment.  Their
+# tests use importorskip guards and remain collectable through testpaths.
+if not HAS_DB:
+    collect_ignore_glob = ["db/tables/*.py", "db/tracker.py"]
+
 
 @pytest.fixture(autouse=True, scope="function")
 def default_test_mission(monkeypatch, request):
